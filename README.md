@@ -59,3 +59,5 @@ The optional VirusTotal check sends only the file's SHA-256, using a key you pro
 ## Using Claude from APKGuard
 
 The explanations run through the unmodified Claude Code the user installed and signed in to. This follows Anthropic's published rules for products that run Claude Code (see "Can customers offer Claude Code in their products?" and "Authentication and credential use" in Anthropic's Claude Code legal and compliance page): users sign in through Anthropic's own flow, usage is billed to the user's own plan, and APKGuard neither collects nor relays credentials. Before distributing the app publicly, confirm the arrangement with Anthropic, as that page recommends.
+
+See [docs/TESTING.md](docs/TESTING.md) for how to get a build and what to try.

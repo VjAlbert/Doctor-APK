@@ -23,7 +23,8 @@ export interface BaseDeps {
  */
 export async function resolveEngineBase(deps: BaseDeps): Promise<string> {
   if (!deps.isTauri) return deps.devBase
-  for (let attempt = 0; attempt < (deps.attempts ?? 100); attempt++) {
+  // A single-file executable can take a while to unpack on first start (antivirus scans included).
+  for (let attempt = 0; attempt < (deps.attempts ?? 400); attempt++) {
     const port = await deps.invoke('engine_port')
     if (typeof port === 'number') return `http://127.0.0.1:${port}`
     await deps.sleep(100)
