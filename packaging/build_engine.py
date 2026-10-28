@@ -2,7 +2,7 @@
 
 Run from the repository root with the engine installed:  python packaging/build_engine.py
 The result lands in packaging/dist/ and is copied to app/src-tauri/binaries/ under
-the name Tauri expects: apkguard-<target-triple>[.exe].
+the name Tauri expects: apkguard-engine-<target-triple>[.exe].
 """
 
 from __future__ import annotations
@@ -56,7 +56,8 @@ def main() -> int:
     exe = DIST / ("apkguard.exe" if platform.system() == "Windows" else "apkguard")
     BINARIES.mkdir(parents=True, exist_ok=True)
     suffix = ".exe" if exe.suffix == ".exe" else ""
-    target = BINARIES / f"apkguard-{target_triple()}{suffix}"
+    # Tauri refuses a sidecar named like the Cargo package ("apkguard"), hence "apkguard-engine".
+    target = BINARIES / f"apkguard-engine-{target_triple()}{suffix}"
     shutil.copy2(exe, target)
     print(f"built {exe} ({exe.stat().st_size / 1e6:.0f} MB) -> {target}")
     return 0
