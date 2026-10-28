@@ -155,10 +155,18 @@ def make_keystore(path: Path, dname: str) -> None:
     )
 
 
-def build_apk(path: Path, tree: tuple, keystore: Path | None) -> Path:
+def build_apk(
+    path: Path,
+    tree: tuple,
+    keystore: Path | None,
+    dex: bytes | None = None,
+    extra: dict[str, bytes] | None = None,
+) -> Path:
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("AndroidManifest.xml", build_manifest(tree))
-        zf.writestr("classes.dex", b"")
+        zf.writestr("classes.dex", dex if dex is not None else build_dex())
+        for name, content in (extra or {}).items():
+            zf.writestr(name, content)
     if keystore is not None:
         subprocess.run(
             ["jarsigner", "-keystore", str(keystore), "-storepass", "testpass",
@@ -176,3 +184,100 @@ def build_xapk(path: Path, base_apk: Path) -> Path:
 
 
 __all__ = ["build_apk", "build_xapk", "make_keystore", "manifest_tree", "shutil"]
+
+
+# --- minimal DEX -----------------------------------------------------------
+
+def _uleb(value: int) -> bytes:
+    out = bytearray()
+    while True:
+        byte = value & 0x7F
+        value >>= 7
+        if value:
+            out.append(byte | 0x80)
+        else:
+            out.append(byte)
+            return bytes(out)
+
+
+def build_dex(strings: list[str] = (), methods: list[tuple[str, str]] = ()) -> bytes:
+    """Build a DEX with only string, type, proto and method tables.
+
+    `methods` are (class descriptor, method name) pairs such as
+    ("Ldalvik/system/DexClassLoader;", "<init>"). There are no class
+    definitions or code, which is enough for the string and API analyzers.
+    """
+    import hashlib
+    import zlib
+
+    pool: list[str] = []
+
+    def sid(text: str) -> int:
+        if text not in pool:
+            pool.append(text)
+        return pool.index(text)
+
+    void = sid("V")
+    classes = sorted({c for c, _ in methods})
+    for text in strings:
+        sid(text)
+    for cls in classes:
+        sid(cls)
+    for _, name in methods:
+        sid(name)
+    # type ids: class types, then "V"
+    type_strings = classes + ["V"]
+    order = sorted(range(len(pool)), key=lambda i: pool[i])  # DEX wants sorted strings
+    remap = {old: new for new, old in enumerate(order)}
+    sorted_pool = [pool[i] for i in order]
+
+    types_sorted = sorted(type_strings, key=lambda s: remap[pool.index(s)])
+    n_str, n_type = len(sorted_pool), len(types_sorted)
+    proto_ids = [(remap[void], types_sorted.index("V"), 0)]
+    method_ids = sorted(
+        (types_sorted.index(c), 0, remap[pool.index(n)]) for c, n in methods
+    )
+
+    str_off = 0x70
+    type_off = str_off + 4 * n_str
+    proto_off = type_off + 4 * n_type
+    method_off = proto_off + 12 * len(proto_ids)
+    data_off = method_off + 8 * len(method_ids)
+
+    data = bytearray()
+    string_offsets = []
+    for text in sorted_pool:
+        string_offsets.append(data_off + len(data))
+        raw = text.encode("utf-8")
+        data += _uleb(len(text)) + raw + b"\0"
+    while (data_off + len(data)) % 4:
+        data += b"\0"
+    map_off = data_off + len(data)
+    map_items = [
+        (0x0000, 1, 0),
+        (0x0001, n_str, str_off),
+        (0x0002, n_type, type_off),
+        (0x0003, len(proto_ids), proto_off),
+        (0x0005, len(method_ids), method_off),
+        (0x2002, n_str, string_offsets[0]),
+        (0x1000, 1, map_off),
+    ]
+    data += struct.pack("<I", len(map_items))
+    for kind, size, off in map_items:
+        data += struct.pack("<HHII", kind, 0, size, off)
+
+    body = b"".join(struct.pack("<I", o) for o in string_offsets)
+    body += b"".join(struct.pack("<I", remap[pool.index(t)]) for t in types_sorted)
+    body += b"".join(struct.pack("<III", *p) for p in proto_ids)
+    body += b"".join(struct.pack("<HHI", *m) for m in method_ids)
+    file_size = data_off + len(data)
+    header = struct.pack(
+        "<8sI20s" + "I" * 20,
+        b"dex\n035\0", 0, b"\0" * 20, file_size, 0x70, 0x12345678, 0, 0, map_off,
+        n_str, str_off, n_type, type_off, len(proto_ids), proto_off, 0, 0,
+        len(method_ids), method_off, 0, 0, file_size - data_off, data_off,
+    )
+    blob = bytearray(header + body + bytes(data))
+    blob[12:32] = hashlib.sha1(bytes(blob[32:])).digest()
+    blob[8:12] = struct.pack("<I", zlib.adler32(bytes(blob[12:])) & 0xFFFFFFFF)
+    return bytes(blob)

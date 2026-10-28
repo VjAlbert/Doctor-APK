@@ -1,3 +1,4 @@
+import os
 import zipfile
 
 import pytest
@@ -42,6 +43,37 @@ def suspicious_apk(work, debug_keystore):
         exported_service=True,
     )
     return b.build_apk(work / "suspicious.apk", tree, debug_keystore)
+
+
+@pytest.fixture(scope="session")
+def dropper_apk(work, debug_keystore):
+    """Harmless APK that *looks* like a dropper to the static analyzers."""
+    dex = b.build_dex(
+        strings=[
+            "https://api.telegram.org/bot123:ABC/sendMessage",
+            "http://8.8.8.8/gate.php",
+            "http://evil-host.duckdns.org/c2",
+            "content://sms/inbox",
+            "ro.kernel.qemu", "goldfish",
+            "https://example.com/privacy",
+        ],
+        methods=[
+            ("Ldalvik/system/DexClassLoader;", "<init>"),
+            ("Ljava/lang/Runtime;", "exec"),
+            ("Landroid/telephony/SmsManager;", "sendTextMessage"),
+        ],
+    )
+    inner = work / "inner.apk"
+    b.build_apk(inner, b.manifest_tree("com.example.inner"), None)
+    extra = {
+        "assets/logo.png": inner.read_bytes(),
+        "assets/payload.dat": os.urandom(120_000),  # high entropy, no known type
+        "assets/helper.bin": b"\x7fELF" + b"\0" * 64,
+        "assets/stage2": dex,
+        "lib/arm64-v8a/libjiagu.so": b"\x7fELF" + b"\0" * 64,
+    }
+    tree = b.manifest_tree("com.example.dropper", permissions=("RECEIVE_SMS",))
+    return b.build_apk(work / "dropper.apk", tree, debug_keystore, dex=dex, extra=extra)
 
 
 @pytest.fixture(scope="session")

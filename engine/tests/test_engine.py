@@ -131,3 +131,90 @@ def test_cli_error_event(plain_text, capsys):
     assert cli.main(["analyze", str(plain_text), "--lang", "en"]) == 2
     event = json.loads(capsys.readouterr().out.splitlines()[-1])
     assert event["event"] == "error" and event["code"] == "not_zip"
+
+
+# --- M1: code, strings, payloads, YARA -------------------------------------
+
+def test_benign_has_no_m1_findings(benign_apk):
+    report = analyze_apk(benign_apk)
+    assert not [f for f in report.findings if f.module in {"dex", "strings", "payloads", "yara"}]
+
+
+def test_api_findings(dropper_apk):
+    report = analyze_apk(dropper_apk)
+    found = ids(report)
+    assert {"dex.dynamic_loading", "dex.shell_exec", "dex.sms_api"} <= found
+    loader = by_id(report, "dex.dynamic_loading")[0]
+    assert loader.params["apis"] == ["dalvik.system.DexClassLoader.<init>"]
+
+
+def test_string_indicators(dropper_apk):
+    report = analyze_apk(dropper_apk)
+    assert {"strings.telegram_bot", "strings.ip_endpoint", "strings.dynamic_dns"} <= ids(report)
+    assert "8.8.8.8" in report.iocs["ips"]
+    assert "evil-host.duckdns.org" in report.iocs["domains"]
+    assert "example.com" in report.iocs["domains"]
+
+
+def test_private_ips_are_not_indicators(work, good_keystore):
+    from apkguard.analyzers.strings import _public_ip
+    assert _public_ip("192.168.1.10") is None and _public_ip("127.0.0.1") is None
+    assert _public_ip("8.8.8.8") == "8.8.8.8"
+
+
+def test_anti_analysis_needs_two_markers(dropper_apk):
+    assert "dex.anti_analysis" in ids(analyze_apk(dropper_apk))
+
+
+def test_embedded_payloads(dropper_apk):
+    report = analyze_apk(dropper_apk)
+    apk = by_id(report, "payloads.embedded_apk")[0]
+    assert apk.params["files"] == ["assets/logo.png"] and apk.params["disguised"] is True
+    assert "assets/stage2" in by_id(report, "payloads.embedded_dex")[0].params["files"]
+    assert "assets/helper.bin" in by_id(report, "payloads.embedded_elf")[0].params["files"]
+    assert "assets/payload.dat" in by_id(report, "payloads.encrypted_blob")[0].params["files"]
+
+
+def test_packer_by_native_library(dropper_apk):
+    packers = by_id(analyze_apk(dropper_apk), "packer.known")
+    assert [p.params["packer"] for p in packers] == ["360 Jiagu"]
+
+
+def test_yara_sms_exfiltration(dropper_apk):
+    matches = by_id(analyze_apk(dropper_apk), "yara.match")
+    assert "sms_exfiltration" in {m.params["rule"] for m in matches}
+    assert all(m.severity == Severity.HIGH for m in matches if m.params["rule"] == "sms_exfiltration")
+
+
+def test_dropper_scores_high_findings(dropper_apk):
+    assert max(f.severity for f in analyze_apk(dropper_apk).findings) == Severity.HIGH
+
+
+def test_every_emitted_finding_id_is_translated():
+    import re
+    from pathlib import Path
+    import apkguard
+
+    emitted = set()
+    for src in Path(apkguard.__file__).parent.rglob("*.py"):
+        emitted.update(re.findall(r'Finding\(\s*(?:f)?"([a-z_]+\.[a-z_]+)"', src.read_text()))
+    emitted.update(f"finding.{i}" for i in ())
+    for lang in SUPPORTED:
+        for fid in emitted - {"manifest.permission", "yara.match"}:
+            assert f"finding.{fid}.title" in catalog(lang), (lang, fid)
+
+
+def test_yara_rules_all_have_text():
+    import re
+    from importlib import resources
+
+    text = (resources.files("apkguard") / "rules" / "apkguard_generic.yar").read_text()
+    for key in re.findall(r'key = "([a-z_]+)"', text):
+        for lang in SUPPORTED:
+            assert f"finding.yara.{key}.title" in catalog(lang), key
+
+
+def test_unknown_yara_rule_falls_back_to_generic():
+    from apkguard.models import Finding
+    f = Finding("yara.match", Severity.MEDIUM, "yara", {"rule": "custom_rule", "key": "custom_rule"})
+    assert "custom_rule" in render_finding(f, "it")["title"]

@@ -8,13 +8,13 @@ from typing import Any
 
 from androguard.core.apk import APK
 
-from .analyzers import certificate, manifest
+from .analyzers import certificate, dex, manifest, payloads, strings, yara_scan
 from .ingest import IngestError, ingest
 from .models import Report
 
 ProgressCallback = Callable[[dict[str, Any]], None]
 
-STEPS = ("ingest", "manifest", "certificate")
+STEPS = ("ingest", "manifest", "certificate", "dex", "strings", "payloads", "yara")
 
 
 def analyze_apk(
@@ -56,6 +56,23 @@ def analyze_apk(
         emit("certificate", "start")
         certificate.analyze(apk, report)
         emit("certificate", "done")
+
+        emit("dex", "start")
+        facts = dex.load_facts(apk)
+        dex.analyze(facts, report)
+        emit("dex", "done")
+
+        emit("strings", "start")
+        strings.analyze(facts, report)
+        emit("strings", "done")
+
+        emit("payloads", "start")
+        payloads.analyze(result.apk_path, report)
+        emit("payloads", "done")
+
+        emit("yara", "start")
+        yara_scan.analyze(facts, report)
+        emit("yara", "done")
     finally:
         result.cleanup()
     return report

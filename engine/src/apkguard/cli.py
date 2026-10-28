@@ -10,6 +10,8 @@ import argparse
 import json
 import sys
 
+from loguru import logger
+
 from . import __version__
 from .i18n import SUPPORTED, render_finding, t
 from .ingest import IngestError
@@ -33,6 +35,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
+    logger.remove()  # androguard logs to stderr via loguru; keep stdout/stderr clean
     try:
         report = analyze_apk(args.apk, progress=_write)
     except IngestError as exc:

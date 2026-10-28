@@ -7,7 +7,7 @@ name = "apkguard-engine"
 version = "0.1.0"
 description = "APKGuard analysis engine: static analysis of Android APK files"
 requires-python = ">=3.10"
-dependencies = ["androguard>=4.1"]
+dependencies = ["androguard>=4.1", "yara-python>=4.5"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
@@ -19,7 +19,7 @@ apkguard = "apkguard.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-apkguard = ["i18n/*.json"]
+apkguard = ["i18n/*.json", "rules/*.yar"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

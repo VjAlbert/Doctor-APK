@@ -46,6 +46,8 @@ class Report:
     app: dict[str, Any] = field(default_factory=dict)
     certificates: list[dict[str, Any]] = field(default_factory=list)
     permissions: list[str] = field(default_factory=list)
+    iocs: dict[str, list[str]] = field(default_factory=dict)
+    stats: dict[str, Any] = field(default_factory=dict)
     findings: list[Finding] = field(default_factory=list)
 
     def add(self, finding: Finding) -> None:
