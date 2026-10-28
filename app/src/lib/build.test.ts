@@ -1,5 +1,15 @@
-import { describe, expect, it } from 'vitest'
-import { buildsDiffer, isOlderReport } from './build'
+import { describe, expect, it, vi } from 'vitest'
+import { buildsDiffer, getEngineInfo, isOlderReport } from './build'
+
+describe('an engine that predates build identifiers', () => {
+  it('is reported as unknown, never as "undefined", and counts as a mismatch', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(JSON.stringify({ ok: true, categories: [] }), { status: 200 }))))
+    const info = await getEngineInfo()
+    expect(info).toEqual({ version: 'unknown', build: 'unknown' })
+    expect(buildsDiffer('f7920b1', info.build)).toBe(true)
+    vi.unstubAllGlobals()
+  })
+})
 
 describe('build identifiers', () => {
   it('flags a mixed installation only when both builds are real and different', () => {

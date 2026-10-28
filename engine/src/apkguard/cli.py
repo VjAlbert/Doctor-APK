@@ -37,6 +37,8 @@ def _build_parser() -> argparse.ArgumentParser:
     analyze.add_argument("--lang", choices=SUPPORTED, default="en")
     serve = sub.add_parser("serve", help="run the local bridge used by the desktop UI")
     serve.add_argument("--port", type=int, default=8765)
+    serve.add_argument("--exit-with-parent", action="store_true",
+                       help="stop when the process that started the engine ends (used by the desktop app)")
     analyze.add_argument("--virustotal", action="store_true",
                          help="look up the file hash on VirusTotal (key from $APKGUARD_VT_KEY)")
     analyze.add_argument("--category", choices=["auto", *categories()], default="auto",
@@ -86,6 +88,9 @@ def main(argv: list[str] | None = None) -> int:
         return _fingerprint(args.apk)
     if args.command == "serve":
         from .server import serve
+        if args.exit_with_parent:
+            from .lifecycle import exit_with_parent
+            exit_with_parent()
         serve(args.port)
         return 0
     try:

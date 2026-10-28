@@ -11,6 +11,10 @@ Every push to `main` runs the workflow in `.github/workflows/build.yml`. Open th
 Builds are unsigned, so Windows SmartScreen will warn: choose "More info" then "Run anyway".
 The first start can take several seconds while the bundled analysis engine unpacks.
 
+**Upgrading:** close APKGuard first. The installer also ends any leftover `apkguard-engine.exe`, which would
+otherwise keep the old engine locked. To check what you are running, open *Settings*, section *About*: the
+interface and the engine must show the same build.
+
 ## Optional: AI features
 
 "Connect Claude" in Settings uses a Claude Code that **you** installed and signed in to

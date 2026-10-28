@@ -31,7 +31,7 @@ fn main() {
             let (mut events, child) = app
                 .shell()
                 .sidecar("apkguard-engine")?
-                .args(["serve", "--port", "0"])
+                .args(["serve", "--port", "0", "--exit-with-parent"])
                 .spawn()?;
             *app.state::<Engine>().child.lock().unwrap() = Some(child);
 
