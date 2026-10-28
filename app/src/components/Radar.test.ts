@@ -12,7 +12,8 @@ describe('radar sweep', () => {
     expect(html).toContain('<animateTransform')
     expect(html).toContain('from="0 0 0"')
     expect(html).toContain('to="360 0 0"')
-    expect(html).not.toMatch(/transform-origin|style="[^"]*rotate/)
+    const sweep = html.slice(html.indexOf('<g data-testid="radar-sweep">'), html.indexOf('</g>') + 4)
+    expect(sweep).not.toMatch(/style=|transform-origin/)   // (the blips scale around themselves on purpose)
   })
 
   it('draws the sweep and the rings from the same centre', () => {
