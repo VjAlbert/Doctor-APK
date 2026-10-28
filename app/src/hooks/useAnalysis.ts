@@ -107,5 +107,5 @@ export function useAnalysis(lang: Lang, vtKey?: string) {
       })
   }, [lang, phase])
 
-  return { phase, history, analyze, openFromHistory, reset, retry, wipeHistory }
+  return { phase, history, file: fileRef.current, analyze, openFromHistory, reset, retry, wipeHistory }
 }

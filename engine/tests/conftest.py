@@ -1,5 +1,6 @@
 import os
 import zipfile
+from pathlib import Path
 
 import pytest
 
@@ -124,3 +125,21 @@ def plain_text(work):
     path = work / "note.apk"
     path.write_text("not a zip")
     return path
+
+
+DEMO_DEX = Path(__file__).parent / "data" / "demo" / "classes.dex"
+
+
+@pytest.fixture(scope="session")
+def demo_apk(work, good_keystore):
+    """An APK around real compiled code (see tests/data/demo/build.sh)."""
+    components = (
+        ("activity", {"android:name": "com.example.demo.Notes"},
+         [("intent-filter", {}, [("action", {"android:name": "android.intent.action.MAIN"}, []),
+                                 ("category", {"android:name": "android.intent.category.LAUNCHER"}, [])])]),
+        ("receiver", {"android:name": "com.example.demo.SmsForwarder", "android:exported": True},
+         [("intent-filter", {}, [("action", {"android:name": "android.provider.Telephony.SMS_RECEIVED"}, [])])]),
+    )
+    tree = b.manifest_tree("com.example.demo", permissions=("INTERNET", "RECEIVE_SMS"), components=components,
+                           label="Demo Notes")
+    return b.build_apk(work / "demo.apk", tree, good_keystore, dex=DEMO_DEX.read_bytes())

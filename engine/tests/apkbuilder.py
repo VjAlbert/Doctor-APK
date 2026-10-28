@@ -125,6 +125,7 @@ def manifest_tree(
     debuggable: bool = False,
     exported_service: bool = False,
     label: str = "Test App",
+    components: tuple = (),
 ) -> tuple:
     app_attrs: dict[str, object] = {"android:label": label}
     if debuggable:
@@ -135,6 +136,7 @@ def manifest_tree(
             ("service", {"android:name": ".SyncService"},
              [("intent-filter", {}, [("action", {"android:name": "com.example.SYNC"}, [])])])
         )
+    app_children.extend(components)
     children = [
         ("uses-sdk", {"android:minSdkVersion": 21, "android:targetSdkVersion": target_sdk}, []),
     ]

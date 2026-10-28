@@ -2,13 +2,14 @@ import { motion } from 'framer-motion'
 import { useLang } from '../lib/lang'
 import type { UiKey } from '../lib/ui'
 
-export type ResultView = 'verdict' | 'threats' | 'permissions' | 'signature'
+export type ResultView = 'verdict' | 'threats' | 'permissions' | 'signature' | 'code'
 
 const TABS: { id: ResultView; label: UiKey }[] = [
   { id: 'verdict', label: 'tab.summary' },
   { id: 'threats', label: 'tab.findings' },
   { id: 'permissions', label: 'tab.permissions' },
   { id: 'signature', label: 'tab.signature' },
+  { id: 'code', label: 'tab.code' },
 ]
 
 export function Tabs({ view, onChange }: { view: ResultView; onChange: (view: ResultView) => void }) {

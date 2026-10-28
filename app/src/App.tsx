@@ -1,6 +1,7 @@
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DropZone } from './components/DropZone'
+import { CodeView } from './components/CodeView'
 import { ErrorView } from './components/ErrorView'
 import { ExplainPanel } from './components/ExplainPanel'
 import { HistoryList } from './components/HistoryList'
@@ -128,6 +129,9 @@ function Screen() {
             {phase.kind === 'result' && view === 'threats' && <ThreatsView report={phase.report} onBack={() => setView('verdict')} />}
             {phase.kind === 'result' && view === 'permissions' && <PermissionsView report={phase.report} />}
             {phase.kind === 'result' && view === 'signature' && <SignatureView report={phase.report} />}
+            {phase.kind === 'result' && view === 'code' && (
+              <CodeView file={analysis.file} aiReady={settings.aiEnabled && aiStatus?.state === 'connected'} />
+            )}
           </motion.div>
         </AnimatePresence>
       </main>
