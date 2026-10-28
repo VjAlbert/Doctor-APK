@@ -29,6 +29,14 @@ def debug_keystore(work):
 
 
 @pytest.fixture(scope="session")
+def google_keystore(work):
+    """A self-signed key whose subject imitates Android's public test keys."""
+    path = work / "google.jks"
+    b.make_keystore(path, "CN=Android, OU=Android, O=Google Inc., L=Mountain View, ST=California, C=US")
+    return path
+
+
+@pytest.fixture(scope="session")
 def benign_apk(work, good_keystore):
     tree = b.manifest_tree("com.example.benign", permissions=("INTERNET",))
     return b.build_apk(work / "benign.apk", tree, good_keystore)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 
 from androguard.core.apk import APK
@@ -32,6 +33,16 @@ def _is_debug(info: dict) -> bool:
     return "CN=Android Debug" in info["subject"] or "Common Name: Android Debug" in info["subject"]
 
 
+# Android's own test and platform keys carry this subject. They are public, so a third-party app that
+# presents it either reuses a key anyone can have or imitates Google's name; neither is normal.
+_GOOGLE_ANDROID = re.compile(r"Common Name: Android(?:,|$)")
+
+
+def _google_lookalike(info: dict) -> bool:
+    subject = info["subject"]
+    return bool(info["self_signed"] and _GOOGLE_ANDROID.search(subject) and "Organization: Google" in subject)
+
+
 def analyze(apk: APK, report: Report) -> None:
     certs = apk.get_certificates()
     if not certs:
@@ -44,6 +55,8 @@ def analyze(apk: APK, report: Report) -> None:
         report.certificates.append(info)
         if _is_debug(info):
             report.add(Finding("certificate.debug", Severity.HIGH, MODULE, {"sha256": info["sha256"]}))
+        elif _google_lookalike(info):
+            report.add(Finding("certificate.google_lookalike", Severity.MEDIUM, MODULE, {"sha256": info["sha256"]}))
         elif info["self_signed"]:
             # Nearly every Android app is self-signed: informational only.
             report.add(Finding("certificate.self_signed", Severity.INFO, MODULE, {"sha256": info["sha256"]}))

@@ -166,3 +166,26 @@ def test_an_ad_supported_media_player_is_a_caution_at_most(work, good_keystore):
     assert not [f for f in report.findings if f.severity == Severity.CRITICAL]
     assert "WRITE_SETTINGS" not in perm_findings(report) and "dex.accessibility_control" not in ids(report)
     assert "payloads.embedded_dex" not in ids(report) and "combo.dropper" not in ids(report)
+
+
+# --- certificates ---------------------------------------------------------------------------------
+
+def test_a_certificate_imitating_googles_test_keys_is_flagged(work, google_keystore):
+    apk = build(work, google_keystore, "lookalike")
+    report = analyze_apk(apk)
+    found = {f.id: f for f in report.findings}
+    assert found["certificate.google_lookalike"].severity == Severity.MEDIUM
+    assert "certificate.debug" not in found and "certificate.self_signed" not in found
+
+
+def test_ordinary_and_debug_certificates_are_not_lookalikes(work, good_keystore, debug_keystore):
+    assert "certificate.google_lookalike" not in ids(analyze_apk(build(work, good_keystore, "plainsig")))
+    debug = analyze_apk(build(work, debug_keystore, "dbgsig"))
+    assert "certificate.debug" in ids(debug) and "certificate.google_lookalike" not in ids(debug)
+
+
+def test_the_lookalike_texts_exist_in_both_languages():
+    from apkguard.i18n import SUPPORTED, catalog
+    for lang in SUPPORTED:
+        for part in ("title", "description", "advice"):
+            assert f"finding.certificate.google_lookalike.{part}" in catalog(lang)
