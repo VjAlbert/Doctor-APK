@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "sources": {
+    "fdroid": {"name": "F-Droid", "coverage": "store"}
+  },
+  "packages": {}
+}

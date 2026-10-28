@@ -73,3 +73,7 @@ def render_verdict(verdict: dict, category: dict, lang: str = DEFAULT_LANG) -> d
         "limitations": t("verdict.limitations", lang),
         "category": category_name(category.get("id", "unknown"), lang),
     }
+
+
+def render_authenticity(auth: dict, lang: str = DEFAULT_LANG) -> str:
+    return t(f"authenticity.status.{auth.get('status', 'unknown')}", lang)

@@ -51,3 +51,9 @@ def detect(report: Report, category_id: str) -> None:
     if "certificate.debug" in ids and len(heavy) >= 2:
         add("combo.repackaged", Severity.HIGH,
             ["certificate.debug", *sorted(f.params["permission"] for f in heavy)])
+
+    other_high = [f.id for f in report.findings
+                  if f.severity >= Severity.HIGH and not f.id.startswith(("authenticity.", "combo."))]
+    if "authenticity.mismatch" in ids and other_high:
+        add("combo.tampered_known_app", Severity.CRITICAL,
+            ["authenticity.mismatch", *sorted(set(other_high))[:5]])

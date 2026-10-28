@@ -13,7 +13,7 @@ import sys
 from loguru import logger
 
 from . import __version__
-from .i18n import SUPPORTED, render_finding, render_verdict, t
+from .i18n import SUPPORTED, render_authenticity, render_finding, render_verdict, t
 from .ingest import IngestError
 from .models import Finding, Severity
 from .pipeline import analyze_apk
@@ -29,6 +29,8 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="apkguard", description="Static APK analyzer")
     parser.add_argument("--version", action="version", version=f"apkguard {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
+    fp = sub.add_parser("fingerprint", help="print the signing fingerprints of an APK")
+    fp.add_argument("apk")
     analyze = sub.add_parser("analyze", help="analyze an APK file")
     analyze.add_argument("apk")
     analyze.add_argument("--lang", choices=SUPPORTED, default="en")
@@ -37,9 +39,31 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _fingerprint(path: str) -> int:
+    from androguard.core.apk import APK
+
+    from .analyzers.certificate import _describe
+    from .ingest import ingest
+
+    try:
+        result = ingest(path)
+    except IngestError as exc:
+        _write({"event": "error", "code": exc.code, "message": t(f"error.{exc.code}", "en", **exc.params)})
+        return 2
+    try:
+        apk = APK(str(result.apk_path))
+        _write({"package": apk.get_package(), "version_name": apk.get_androidversion_name(),
+                "sha256": [_describe(c)["sha256"] for c in apk.get_certificates()]})
+    finally:
+        result.cleanup()
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     logger.remove()  # androguard logs to stderr via loguru; keep stdout/stderr clean
+    if args.command == "fingerprint":
+        return _fingerprint(args.apk)
     try:
         report = analyze_apk(args.apk, progress=_write,
                              category=None if args.category == "auto" else args.category)
@@ -56,6 +80,7 @@ def main(argv: list[str] | None = None) -> int:
                for r in data["verdict"]["reasons"]]
     for entry, finding in zip(data["verdict"]["reasons"], reasons):
         entry["text"] = render_finding(finding, args.lang)
+    data["authenticity"]["label"] = render_authenticity(data["authenticity"], args.lang)
     data["verdict"]["text"] = render_verdict(data["verdict"], data["category"], args.lang)
     _write({"event": "report", "lang": args.lang, "report": data})
     return 0

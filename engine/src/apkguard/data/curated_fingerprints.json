@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "sources": {
+    "curated": {"name": "the developer", "coverage": "developer"}
+  },
+  "packages": {}
+}
