@@ -124,8 +124,9 @@ def manifest_tree(
     target_sdk: int = 34,
     debuggable: bool = False,
     exported_service: bool = False,
+    label: str = "Test App",
 ) -> tuple:
-    app_attrs: dict[str, object] = {"android:label": "Test App"}
+    app_attrs: dict[str, object] = {"android:label": label}
     if debuggable:
         app_attrs["android:debuggable"] = True
     app_children = []

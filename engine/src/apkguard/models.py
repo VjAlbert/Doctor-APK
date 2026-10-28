@@ -46,6 +46,8 @@ class Report:
     app: dict[str, Any] = field(default_factory=dict)
     certificates: list[dict[str, Any]] = field(default_factory=list)
     permissions: list[str] = field(default_factory=list)
+    category: dict[str, Any] = field(default_factory=dict)
+    verdict: dict[str, Any] = field(default_factory=dict)
     iocs: dict[str, list[str]] = field(default_factory=dict)
     stats: dict[str, Any] = field(default_factory=dict)
     findings: list[Finding] = field(default_factory=list)

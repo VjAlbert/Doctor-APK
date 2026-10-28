@@ -1,0 +1,65 @@
+{
+  "_doc": "Per-category permission profiles. 'expected' permissions are normal for the category (downgraded); 'unusual' ones keep their severity; any other permission of medium or high severity is anomalous (raised one level). Keywords are matched against the package name and app label.",
+  "categories": {
+    "flashlight": {
+      "keywords": ["flashlight", "torch", "torcia", "lampe", "linterna"],
+      "expected": ["CAMERA"],
+      "unusual": []
+    },
+    "calculator": {
+      "keywords": ["calculator", "calcolatrice", "calc", "calculadora"],
+      "expected": [],
+      "unusual": []
+    },
+    "wallpaper": {
+      "keywords": ["wallpaper", "wallpapers", "sfondi", "sfondo", "theme", "themes", "tema", "ringtone", "suonerie"],
+      "expected": ["READ_EXTERNAL_STORAGE"],
+      "unusual": ["WRITE_SETTINGS"]
+    },
+    "camera_photo": {
+      "keywords": ["camera", "photo", "photos", "foto", "selfie", "photoeditor", "gallery", "galleria"],
+      "expected": ["CAMERA", "READ_EXTERNAL_STORAGE", "MANAGE_EXTERNAL_STORAGE", "RECORD_AUDIO"],
+      "unusual": ["ACCESS_FINE_LOCATION"]
+    },
+    "messaging": {
+      "keywords": ["messenger", "chat", "whatsapp", "telegram", "signal", "sms", "messages", "messaggi", "videocall"],
+      "expected": ["READ_SMS", "SEND_SMS", "RECEIVE_SMS", "READ_CONTACTS", "CAMERA", "RECORD_AUDIO", "READ_EXTERNAL_STORAGE", "READ_PHONE_STATE", "CALL_PHONE", "RECEIVE_BOOT_COMPLETED", "READ_CALL_LOG"],
+      "unusual": ["ACCESS_FINE_LOCATION", "SYSTEM_ALERT_WINDOW", "BIND_NOTIFICATION_LISTENER_SERVICE"]
+    },
+    "banking": {
+      "keywords": ["bank", "banking", "banca", "wallet", "finance", "fintech", "payments", "bancomat"],
+      "expected": ["CAMERA", "READ_PHONE_STATE", "ACCESS_FINE_LOCATION", "RECEIVE_BOOT_COMPLETED"],
+      "unusual": ["READ_CONTACTS"]
+    },
+    "game": {
+      "keywords": ["game", "games", "gioco", "giochi", "puzzle", "racing", "arcade", "solitaire"],
+      "expected": ["READ_EXTERNAL_STORAGE", "READ_PHONE_STATE"],
+      "unusual": ["RECORD_AUDIO", "ACCESS_FINE_LOCATION"]
+    },
+    "browser": {
+      "keywords": ["browser", "navigatore web"],
+      "expected": ["CAMERA", "RECORD_AUDIO", "ACCESS_FINE_LOCATION", "READ_EXTERNAL_STORAGE", "MANAGE_EXTERNAL_STORAGE"],
+      "unusual": []
+    },
+    "vpn": {
+      "keywords": ["vpn", "proxy"],
+      "expected": ["RECEIVE_BOOT_COMPLETED", "QUERY_ALL_PACKAGES"],
+      "unusual": []
+    },
+    "file_manager": {
+      "keywords": ["filemanager", "files", "explorer", "esplora"],
+      "expected": ["MANAGE_EXTERNAL_STORAGE", "READ_EXTERNAL_STORAGE", "REQUEST_INSTALL_PACKAGES"],
+      "unusual": []
+    },
+    "navigation": {
+      "keywords": ["maps", "navigation", "navigator", "gps", "navigatore"],
+      "expected": ["ACCESS_FINE_LOCATION", "ACCESS_BACKGROUND_LOCATION", "READ_PHONE_STATE", "RECEIVE_BOOT_COMPLETED"],
+      "unusual": []
+    },
+    "media_player": {
+      "keywords": ["player", "music", "musica", "video", "radio", "podcast"],
+      "expected": ["READ_EXTERNAL_STORAGE", "READ_PHONE_STATE", "RECEIVE_BOOT_COMPLETED"],
+      "unusual": ["RECORD_AUDIO"]
+    }
+  }
+}

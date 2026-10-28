@@ -77,6 +77,20 @@ def dropper_apk(work, debug_keystore):
 
 
 @pytest.fixture(scope="session")
+def messenger_apk(work, good_keystore):
+    perms = ("READ_SMS", "SEND_SMS", "RECEIVE_SMS", "READ_CONTACTS", "CAMERA", "INTERNET")
+    tree = b.manifest_tree("com.example.chat", permissions=perms, label="Secure Chat")
+    return b.build_apk(work / "messenger.apk", tree, good_keystore)
+
+
+@pytest.fixture(scope="session")
+def torch_apk(work, good_keystore):
+    perms = ("READ_SMS", "SEND_SMS", "READ_CONTACTS", "SYSTEM_ALERT_WINDOW", "CAMERA")
+    tree = b.manifest_tree("com.example.torch", permissions=perms, label="Super Torch")
+    return b.build_apk(work / "torch.apk", tree, good_keystore)
+
+
+@pytest.fixture(scope="session")
 def unsigned_apk(work):
     tree = b.manifest_tree("com.example.unsigned")
     return b.build_apk(work / "unsigned.apk", tree, None)

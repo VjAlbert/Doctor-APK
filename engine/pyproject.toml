@@ -19,7 +19,7 @@ apkguard = "apkguard.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-apkguard = ["i18n/*.json", "rules/*.yar"]
+apkguard = ["i18n/*.json", "rules/*.yar", "rules/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

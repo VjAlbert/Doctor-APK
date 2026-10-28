@@ -11,14 +11,17 @@ from androguard.core.apk import APK
 from .analyzers import certificate, dex, manifest, payloads, strings, yara_scan
 from .ingest import IngestError, ingest
 from .models import Report
+from .scoring import score_report
 
 ProgressCallback = Callable[[dict[str, Any]], None]
 
-STEPS = ("ingest", "manifest", "certificate", "dex", "strings", "payloads", "yara")
+STEPS = ("ingest", "manifest", "certificate", "dex", "strings", "payloads", "yara", "scoring")
 
 
 def analyze_apk(
-    path: str | os.PathLike[str], progress: ProgressCallback | None = None
+    path: str | os.PathLike[str],
+    progress: ProgressCallback | None = None,
+    category: str | None = None,
 ) -> Report:
     """Analyze `path`. Raises IngestError when the input is unusable."""
 
@@ -73,6 +76,10 @@ def analyze_apk(
         emit("yara", "start")
         yara_scan.analyze(facts, report)
         emit("yara", "done")
+
+        emit("scoring", "start")
+        score_report(report, category)
+        emit("scoring", "done")
     finally:
         result.cleanup()
     return report

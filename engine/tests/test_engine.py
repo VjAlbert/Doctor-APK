@@ -112,7 +112,8 @@ def test_all_findings_render_in_both_languages(suspicious_apk, unsigned_apk, tra
     for finding in findings:
         for lang in SUPPORTED:
             text = render_finding(finding, lang)
-            assert all(v and not v.startswith("finding.") for v in text.values()), finding.id
+            for part in ("title", "description", "advice"):
+                assert text[part] and not text[part].startswith("finding."), (finding.id, part)
 
 
 # --- CLI --------------------------------------------------------------------
@@ -186,8 +187,10 @@ def test_yara_sms_exfiltration(dropper_apk):
     assert all(m.severity == Severity.HIGH for m in matches if m.params["rule"] == "sms_exfiltration")
 
 
-def test_dropper_scores_high_findings(dropper_apk):
-    assert max(f.severity for f in analyze_apk(dropper_apk).findings) == Severity.HIGH
+def test_dropper_is_critical(dropper_apk):
+    report = analyze_apk(dropper_apk)
+    assert max(f.severity for f in report.findings) == Severity.CRITICAL
+    assert report.verdict["id"] == "do_not_install"
 
 
 def test_every_emitted_finding_id_is_translated():

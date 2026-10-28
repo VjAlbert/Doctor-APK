@@ -46,9 +46,30 @@ def _base(finding: Finding) -> str:
     return specific if specific + ".title" in catalog(DEFAULT_LANG) else generic
 
 
+def category_name(category_id: str, lang: str = DEFAULT_LANG) -> str:
+    return t(f"category.{category_id}", lang)
+
+
 def render_finding(finding: Finding, lang: str = DEFAULT_LANG) -> dict[str, str]:
     base = _base(finding)
     params = {k: ", ".join(map(str, v)) if isinstance(v, list) else v
               for k, v in finding.params.items()}
-    return {part: t(f"{base}.{part}", lang, **params)
+    category = finding.params.get("category")
+    if category:
+        params["category"] = category_name(category, lang)
+    text = {part: t(f"{base}.{part}", lang, **params)
             for part in ("title", "description", "advice")}
+    profile = finding.params.get("profile")
+    text["note"] = (t(f"note.profile.{profile}", lang, **params)
+                    if profile in ("expected", "anomalous") else "")
+    return text
+
+
+def render_verdict(verdict: dict, category: dict, lang: str = DEFAULT_LANG) -> dict[str, str]:
+    vid = verdict["id"]
+    return {
+        "title": t(f"verdict.{vid}.title", lang),
+        "summary": t(f"verdict.{vid}.summary", lang),
+        "limitations": t("verdict.limitations", lang),
+        "category": category_name(category.get("id", "unknown"), lang),
+    }
