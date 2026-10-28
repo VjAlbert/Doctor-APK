@@ -28,4 +28,5 @@ elif mode == "failure":
     print(json.dumps({"is_error": True, "result": "overloaded"}))
     sys.exit(1)
 else:
-    print(json.dumps({"is_error": False, "result": "Spiegazione di prova.", "total_cost_usd": 0.01234567, "duration_ms": 1500}))
+    print(json.dumps({"is_error": False, "result": os.environ.get("FAKE_CLAUDE_REPLY", "Spiegazione di prova."),
+                      "total_cost_usd": 0.01234567, "duration_ms": 1500}))

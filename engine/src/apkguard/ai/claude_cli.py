@@ -26,6 +26,7 @@ STATUS_TIMEOUT = 20
 ASK_TIMEOUT = 120
 MAX_PROMPT_CHARS = 120_000
 OUTPUT_CAP = 20_000
+LONG_ASK_TIMEOUT = 240  # drafting a change can take a while
 
 _busy = threading.Lock()  # "ordinary individual usage": one request at a time
 
@@ -85,7 +86,7 @@ def status() -> dict:
     }
 
 
-def ask(system: str, prompt: str) -> dict:
+def ask(system: str, prompt: str, timeout: float | None = None) -> dict:
     """One tool-less question. Returns {"text", "cost_usd", "duration_ms"} or raises AiError."""
     if len(prompt) > MAX_PROMPT_CHARS:
         raise AiError("too_large")
@@ -106,7 +107,7 @@ def ask(system: str, prompt: str) -> dict:
                 "--strict-mcp-config",            # no MCP servers from the user's setup
             ]
             try:
-                done = _run(args, stdin=prompt, timeout=ASK_TIMEOUT, cwd=workdir)
+                done = _run(args, stdin=prompt, timeout=timeout or ASK_TIMEOUT, cwd=workdir)
             except subprocess.TimeoutExpired as exc:
                 raise AiError("timeout") from exc
             except OSError as exc:

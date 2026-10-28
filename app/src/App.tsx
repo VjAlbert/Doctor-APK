@@ -6,8 +6,9 @@ import { ErrorView } from './components/ErrorView'
 import { ExplainPanel } from './components/ExplainPanel'
 import { HistoryList } from './components/HistoryList'
 import { ExportMenu } from './components/ExportMenu'
-import { GearIcon, LockIcon } from './components/Icons'
+import { FolderIcon, GearIcon, LockIcon } from './components/Icons'
 import { PermissionsView } from './components/PermissionsView'
+import { ProjectsView } from './components/ProjectsView'
 import { SettingsDrawer } from './components/SettingsDrawer'
 import { SignatureView } from './components/SignatureView'
 import { Tabs, type ResultView } from './components/Tabs'
@@ -91,10 +92,14 @@ function Screen() {
   }, [])
   const analysis = useAnalysis(lang, vtKey)
   const [view, setView] = useState<ResultView>('verdict')
+  const [section, setSection] = useState<'analyze' | 'projects'>('analyze')
+  const [openProject, setOpenProject] = useState<string | null>(null)
   const { phase } = analysis
+  const aiReady = settings.aiEnabled && aiStatus?.state === 'connected'
 
-  const key = phase.kind === 'result' ? `result-${view}` : phase.kind
-  const goHome = () => { setView('verdict'); analysis.reset() }
+  const key = section === 'projects' ? `projects-${openProject ?? 'list'}` : phase.kind === 'result' ? `result-${view}` : phase.kind
+  const goHome = () => { setView('verdict'); setSection('analyze'); analysis.reset() }
+  const showProjects = (id: string | null = null) => { setOpenProject(id); setSection('projects') }
 
   return (
     <div className="relative z-10 flex h-full flex-col">
@@ -103,11 +108,15 @@ function Screen() {
         <div className="flex items-center gap-4">
           <span className="hidden font-mono text-[11px] uppercase tracking-[0.18em] text-dim sm:block">{t('tagline')}</span>
           <LangToggle />
+          <button type="button" onClick={() => showProjects()} aria-label={t('nav.projects')} title={t('nav.projects')}
+            className="flex h-8 items-center gap-2 rounded-lg border border-line px-3 text-sm text-muted transition hover:text-ink"
+            style={section === 'projects' ? { color: '#e6edf6', borderColor: 'rgb(34 211 238 / .5)' } : undefined}>
+            <FolderIcon size={16} /><span className="hidden sm:inline">{t('nav.projects')}</span></button>
           <button type="button" onClick={() => setSettingsOpen(true)} aria-label={t('settings.open')} title={t('settings.open')}
             className="grid size-8 place-items-center rounded-lg border border-line text-muted transition hover:text-ink"><GearIcon size={17} /></button>
         </div>
       </header>
-      {phase.kind === 'result' && (
+      {section === 'analyze' && phase.kind === 'result' && (
         <div className="flex flex-wrap items-center justify-between gap-3 px-8 pb-3">
           <Tabs view={view} onChange={setView} />
           <ExportMenu report={phase.report} />
@@ -117,20 +126,21 @@ function Screen() {
         <AnimatePresence mode="wait">
           <motion.div key={key} className="h-full" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.28 }}>
-            {phase.kind === 'idle' && <Home analysis={analysis} />}
-            {phase.kind === 'scanning' && <div className="flex h-full items-center"><ScanView fileName={phase.fileName} shown={phase.shown} /></div>}
-            {phase.kind === 'error' && <div className="flex h-full items-center"><ErrorView code={phase.code} message={phase.message} onRetry={analysis.retry} onBack={goHome} /></div>}
-            {phase.kind === 'result' && view === 'verdict' && (
+            {section === 'projects' && <ProjectsView key={openProject ?? 'list'} aiReady={aiReady} initialId={openProject} />}
+            {section === 'analyze' && phase.kind === 'idle' && <Home analysis={analysis} />}
+            {section === 'analyze' && phase.kind === 'scanning' && <div className="flex h-full items-center"><ScanView fileName={phase.fileName} shown={phase.shown} /></div>}
+            {section === 'analyze' && phase.kind === 'error' && <div className="flex h-full items-center"><ErrorView code={phase.code} message={phase.message} onRetry={analysis.retry} onBack={goHome} /></div>}
+            {section === 'analyze' && phase.kind === 'result' && view === 'verdict' && (
               <div className="scroll h-full overflow-y-auto pb-8"><div className="flex min-h-full items-center">
                 <VerdictView report={phase.report} onViewAll={() => setView('threats')} onAnother={goHome}
-                  extra={settings.aiEnabled && aiStatus?.state === 'connected' ? <ExplainPanel report={phase.report} /> : undefined} />
+                  extra={aiReady ? <ExplainPanel report={phase.report} /> : undefined} />
               </div></div>
             )}
-            {phase.kind === 'result' && view === 'threats' && <ThreatsView report={phase.report} onBack={() => setView('verdict')} />}
-            {phase.kind === 'result' && view === 'permissions' && <PermissionsView report={phase.report} />}
-            {phase.kind === 'result' && view === 'signature' && <SignatureView report={phase.report} />}
-            {phase.kind === 'result' && view === 'code' && (
-              <CodeView file={analysis.file} aiReady={settings.aiEnabled && aiStatus?.state === 'connected'} />
+            {section === 'analyze' && phase.kind === 'result' && view === 'threats' && <ThreatsView report={phase.report} onBack={() => setView('verdict')} />}
+            {section === 'analyze' && phase.kind === 'result' && view === 'permissions' && <PermissionsView report={phase.report} />}
+            {section === 'analyze' && phase.kind === 'result' && view === 'signature' && <SignatureView report={phase.report} />}
+            {section === 'analyze' && phase.kind === 'result' && view === 'code' && (
+              <CodeView report={phase.report} file={analysis.file} aiReady={aiReady} onCreated={(p) => showProjects(p.id)} />
             )}
           </motion.div>
         </AnimatePresence>
