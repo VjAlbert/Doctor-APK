@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { useLang } from '../lib/lang'
 import type { AiStatus } from '../lib/ai'
+import { buildsDiffer, UI_BUILD, type EngineInfo } from '../lib/build'
 import { VT_KEY_PATTERN, type Settings } from '../lib/settings'
 
 interface Props {
@@ -13,9 +14,10 @@ interface Props {
   ai: { status: AiStatus | null; checking: boolean; error: string | null }
   onConnectAi: () => void
   onDisconnectAi: () => void
+  engine: EngineInfo | null
 }
 
-export function SettingsDrawer({ open, settings, onChange, onClose, onClearHistory, ai, onConnectAi, onDisconnectAi }: Props) {
+export function SettingsDrawer({ open, settings, onChange, onClose, onClearHistory, ai, onConnectAi, onDisconnectAi, engine }: Props) {
   const { t } = useLang()
   const [reveal, setReveal] = useState(false)
 
@@ -104,6 +106,13 @@ export function SettingsDrawer({ open, settings, onChange, onClose, onClearHisto
                 </div>
               )}
               <p className="text-xs leading-relaxed text-dim">{t('ai.privacy')}</p>
+            </section>
+
+            <section className="grid gap-2 border-t border-line pt-5" data-testid="about">
+              <h3 className="font-medium">{t('about.title')}</h3>
+              <p className="font-mono text-xs text-muted">{t('about.ui')}: {UI_BUILD}</p>
+              <p className="font-mono text-xs text-muted">{t('about.engine')}: {engine ? `${engine.version} (${engine.build})` : t('about.unknown')}</p>
+              {buildsDiffer(UI_BUILD, engine?.build) && <p className="text-xs text-caution" role="alert">{t('about.mismatch')}</p>}
             </section>
 
             <section className="grid gap-2 border-t border-line pt-5">

@@ -49,18 +49,22 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev \
             libssl-dev libayatana-appindicator3-dev librsvg2-dev patchelf
       - name: Build the engine executable (sidecar)
+        shell: bash
         run: |
+          python packaging/stamp_build.py
           pip install ./engine pyinstaller
           python packaging/build_engine.py
       - name: Smoke-test the engine executable
         shell: bash
         run: |
           exe=$(ls packaging/dist/apkguard*)
-          "$exe" --version
+          "$exe" --version | tee version.txt
+          grep -q "build ${GITHUB_SHA:0:7}" version.txt  # the frozen engine must be this commit
       - name: Build the desktop app
         working-directory: app
         shell: bash
         env:
+          VITE_BUILD: ${{ github.sha }}
           # linuxdeploy (AppImage) cannot use FUSE on hosted runners
           APPIMAGE_EXTRACT_AND_RUN: "1"
           NO_STRIP: "true"

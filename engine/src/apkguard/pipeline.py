@@ -8,6 +8,7 @@ from typing import Any
 
 from androguard.core.apk import APK
 
+from . import version_info
 from .analyzers import authenticity, certificate, dex, manifest, payloads, reputation, strings, yara_scan
 from .data.fingerprints import Database
 from .ingest import IngestError, ingest
@@ -34,7 +35,7 @@ def analyze_apk(
             progress({"event": "progress", "module": step, "state": state,
                       "index": STEPS.index(step) + 1, "total": len(STEPS)})
 
-    report = Report()
+    report = Report(engine=version_info())
 
     emit("ingest", "start")
     result = ingest(path)

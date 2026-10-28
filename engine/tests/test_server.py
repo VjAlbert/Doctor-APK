@@ -74,3 +74,9 @@ def test_foreign_host_header_is_rejected(server):
 def test_unknown_route(server):
     resp, _ = request(server, "GET", "/nope")
     assert resp.status == 404
+
+
+def test_health_reports_the_build(server):
+    resp, raw = request(server, "GET", "/health")
+    body = json.loads(raw)
+    assert body["version"] and body["build"]

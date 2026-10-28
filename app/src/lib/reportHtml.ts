@@ -83,6 +83,7 @@ export function buildReportHtml(report: Report, lang: Lang, generatedAt = new Da
   <h2>${t('tab.summary')}</h2>
   <table>${facts.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join('')}</table>
   <div class="note">${esc(verdict.text.limitations)}</div>
+  <p class="sub" style="margin-top:14px">APKGuard${report.engine ? ` ${esc(report.engine.version)} (${esc(report.engine.build)})` : ''}</p>
 </div></body></html>`
 }
 

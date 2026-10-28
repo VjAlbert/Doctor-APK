@@ -18,6 +18,7 @@ import { ThreatsView } from './components/ThreatsView'
 import { VerdictView } from './components/VerdictView'
 import { useAnalysis } from './hooks/useAnalysis'
 import { getAiStatus, type AiStatus } from './lib/ai'
+import { getEngineInfo, isOlderReport, type EngineInfo } from './lib/build'
 import { EngineError } from './lib/client'
 import { LangProvider, useLang } from './lib/lang'
 import { activeVtKey, loadSettings, saveSettings, type Settings } from './lib/settings'
@@ -68,6 +69,8 @@ function Screen() {
   const [aiStatus, setAiStatus] = useState<AiStatus | null>(null)
   const [aiChecking, setAiChecking] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
+  const [engineInfo, setEngineInfo] = useState<EngineInfo | null>(null)
+  useEffect(() => { void getEngineInfo().then(setEngineInfo).catch(() => setEngineInfo(null)) }, [])
 
   const checkAi = useCallback(async (connect: boolean) => {
     setAiChecking(true)
@@ -116,6 +119,14 @@ function Screen() {
             className="grid size-8 place-items-center rounded-lg border border-line text-muted transition hover:text-ink"><GearIcon size={17} /></button>
         </div>
       </header>
+      {section === 'analyze' && phase.kind === 'result' && phase.fromHistory && (
+        <div className="mx-8 mb-3 rounded-xl border px-4 py-2.5 text-sm" role="status" data-testid="history-banner"
+          style={isOlderReport(phase.report, engineInfo) ? { borderColor: 'rgb(251 191 36 / .5)', background: 'rgb(251 191 36 / .08)', color: '#fcd34d' } : { borderColor: 'rgb(148 197 255 / .2)', color: '#8a9bb2' }}>
+          {t('hist.banner')} {phase.savedAt ? new Date(phase.savedAt).toLocaleString(lang) : ''},{' '}
+          {phase.report.engine ? t('hist.withEngine').replace('{v}', `${phase.report.engine.version} (${phase.report.engine.build})`) : t('hist.withUnknown')}.
+          {isOlderReport(phase.report, engineInfo) && <> {t('hist.older')}</>}
+        </div>
+      )}
       {section === 'analyze' && phase.kind === 'result' && (
         <div className="flex flex-wrap items-center justify-between gap-3 px-8 pb-3">
           <Tabs view={view} onChange={setView} />
@@ -149,6 +160,7 @@ function Screen() {
       <SettingsDrawer open={settingsOpen} settings={settings} onChange={setSettings} onClose={() => setSettingsOpen(false)}
         onClearHistory={analysis.wipeHistory}
         ai={{ status: aiStatus, checking: aiChecking, error: aiError }}
+        engine={engineInfo}
         onConnectAi={() => void checkAi(true)}
         onDisconnectAi={() => setSettings((s) => ({ ...s, aiEnabled: false }))} />
     </div>

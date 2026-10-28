@@ -30,6 +30,7 @@ export interface Verdict {
 }
 
 export interface Report {
+  engine?: { version: string; build: string }
   file: { name: string; size: number; kind: string; md5: string; sha1: string; sha256: string }
   app: {
     package: string

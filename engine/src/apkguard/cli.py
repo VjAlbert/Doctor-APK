@@ -13,7 +13,7 @@ import sys
 
 from loguru import logger
 
-from . import __version__
+from . import BUILD, __version__
 from .i18n import SUPPORTED, render_authenticity, render_finding, render_verdict, t
 from .ingest import IngestError
 from .models import Finding, Severity
@@ -28,7 +28,7 @@ def _write(obj: dict) -> None:
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="apkguard", description="Static APK analyzer")
-    parser.add_argument("--version", action="version", version=f"apkguard {__version__}")
+    parser.add_argument("--version", action="version", version=f"apkguard {__version__} (build {BUILD})")
     sub = parser.add_subparsers(dest="command", required=True)
     fp = sub.add_parser("fingerprint", help="print the signing fingerprints of an APK")
     fp.add_argument("apk")

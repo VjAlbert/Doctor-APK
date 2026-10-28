@@ -42,6 +42,7 @@ class Finding:
 
 @dataclass
 class Report:
+    engine: dict[str, str] = field(default_factory=dict)
     file: dict[str, Any] = field(default_factory=dict)
     app: dict[str, Any] = field(default_factory=dict)
     certificates: list[dict[str, Any]] = field(default_factory=list)

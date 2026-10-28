@@ -214,6 +214,15 @@ const it = {
   'proj.starter': 'Genera il progetto Android iniziale (sperimentale)',
   'proj.starterNote': 'Claude scrive una bozza di codice a partire dalla specifica. Non viene compilata né verificata: va rivista e provata da una persona.',
   'proj.starterIdea': 'Crea il progetto Android iniziale che realizza SPEC.md: Kotlin con Jetpack Compose e Gradle (Kotlin DSL), con solo le schermate e le funzioni descritte nella specifica, senza analitiche, pubblicità né raccolta di dati. Mantieni il progetto minimo e spiega nel riepilogo cosa è incluso e cosa manca.',
+  'about.title': 'Informazioni',
+  'about.ui': 'Interfaccia',
+  'about.engine': 'Motore',
+  'about.mismatch': 'Interfaccia e motore provengono da build diverse: reinstalla APKGuard.',
+  'about.unknown': 'non disponibile',
+  'hist.banner': 'Analisi salvata il',
+  'hist.withEngine': 'fatta con il motore {v}',
+  'hist.older': "Versione precedente del motore: riapri il file dalla schermata iniziale per rifare l'analisi con le regole attuali.",
+  'hist.withUnknown': 'fatta con un motore precedente',
 } as const
 
 export type UiKey = keyof typeof it
@@ -432,6 +441,15 @@ const en: Record<UiKey, string> = {
   'proj.starter': 'Generate the starter Android project (experimental)',
   'proj.starterNote': 'Claude writes a first draft of the code from the specification. It is not compiled or verified: a person must review and test it.',
   'proj.starterIdea': 'Create the starter Android project that implements SPEC.md: Kotlin with Jetpack Compose and Gradle (Kotlin DSL), with only the screens and features described in the specification, and no analytics, advertising or data collection. Keep the project minimal and explain in the summary what is included and what is missing.',
+  'about.title': 'About',
+  'about.ui': 'Interface',
+  'about.engine': 'Engine',
+  'about.mismatch': 'The interface and the engine come from different builds: reinstall APKGuard.',
+  'about.unknown': 'unavailable',
+  'hist.banner': 'Analysis saved on',
+  'hist.withEngine': 'made with engine {v}',
+  'hist.older': 'Older engine version: reopen the file from the start screen to redo the analysis with the current rules.',
+  'hist.withUnknown': 'made with an earlier engine',
 }
 
 const dictionaries: Record<Lang, Record<UiKey, string>> = { it, en }

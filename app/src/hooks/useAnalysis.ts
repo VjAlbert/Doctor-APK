@@ -10,7 +10,7 @@ const MIN_SCAN_MS = 2600
 export type Phase =
   | { kind: 'idle' }
   | { kind: 'scanning'; fileName: string; shown: number }
-  | { kind: 'result'; report: Report; fromHistory: boolean }
+  | { kind: 'result'; report: Report; fromHistory: boolean; savedAt?: number }
   | { kind: 'error'; code: string; message: string }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -73,7 +73,7 @@ export function useAnalysis(lang: Lang, vtKey?: string) {
   const openFromHistory = useCallback((entry: HistoryEntry) => {
     runId.current += 1
     fileRef.current = null
-    setPhase({ kind: 'result', report: entry.report, fromHistory: true })
+    setPhase({ kind: 'result', report: entry.report, fromHistory: true, savedAt: entry.savedAt })
   }, [])
 
   const reset = useCallback(() => {

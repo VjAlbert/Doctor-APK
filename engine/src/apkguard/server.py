@@ -20,6 +20,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 from androguard.core.apk import APK
 from loguru import logger
 
+from . import version_info
 from .ai import claude_cli, explain
 from .code import CodeError, narrate
 from .code.index import CodeIndex, build_index
@@ -94,7 +95,7 @@ class Handler(BaseHTTPRequestHandler):
         if path.startswith("/workspaces"):
             return self._workspaces("GET", path, parse_qs(urlparse(self.path).query))
         if path == "/health":
-            return self._json(200, {"ok": True, "categories": list(categories())})
+            return self._json(200, {"ok": True, "categories": list(categories()), **version_info()})
         if path == "/ai/status":
             return self._json(200, claude_cli.status())
         slice_route = re.match(r"^/code/([0-9a-f]{64})/slice$", path)

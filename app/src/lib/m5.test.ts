@@ -154,3 +154,11 @@ describe('engine base url', () => {
     expect(new EngineError('c', 'm').code).toBe('c')
   })
 })
+
+describe('report footer', () => {
+  it('names the engine build that produced the report', () => {
+    const html = buildReportHtml({ ...report(), engine: { version: '0.1.0', build: 'abc1234' } }, 'en')
+    expect(html).toContain('APKGuard 0.1.0 (abc1234)')
+    expect(buildReportHtml(report(), 'en')).not.toContain('undefined')
+  })
+})
