@@ -9,7 +9,7 @@ from androguard.core.apk import APK
 from androguard.core.dex import DEX
 
 from ..data.apis import (
-    API_RULES, EMULATOR_MARKERS, PACKER_CLASSES, ROOT_MARKERS)
+    API_GATES, API_RULES, EMULATOR_MARKERS, PACKER_CLASSES, ROOT_MARKERS)
 from ..models import Finding, Report, Severity
 
 MODULE = "dex"
@@ -63,7 +63,12 @@ def analyze(facts: DexFacts, report: Report) -> None:
         report.add(Finding("dex.malformed", Severity.MEDIUM, MODULE,
                            {"count": facts.parse_errors}))
 
+    held = {p[len("android.permission."):] for p in report.permissions if p.startswith("android.permission.")}
+    held |= set(report.stats.get("component_permissions", []))
     for fid, severity, targets in API_RULES:
+        gate = API_GATES.get(fid)
+        if gate and not (gate & held):
+            continue  # calling the API without holding the role is library code, not a capability
         hits = sorted(
             f"{cls[1:-1].replace('/', '.')}.{name}"
             for cls, names in targets.items()
@@ -89,7 +94,7 @@ def analyze(facts: DexFacts, report: Report) -> None:
 
     emulator = sorted(m for m in EMULATOR_MARKERS if m in facts.strings)
     if len(emulator) >= 2:
-        report.add(Finding("dex.anti_analysis", Severity.MEDIUM, MODULE,
+        report.add(Finding("dex.anti_analysis", Severity.LOW, MODULE,
                            {"markers": emulator}))
     root = sorted(m for m in ROOT_MARKERS if m in facts.strings)
     if len(root) >= 2:

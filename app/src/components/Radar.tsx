@@ -15,10 +15,15 @@ export function Radar({ progress }: { progress: number }) {
       <circle r="104" fill="url(#radar-bg)" />
       {[104, 78, 52, 26].map((r) => <circle key={r} r={r} fill="none" stroke="#22d3ee" strokeOpacity=".22" />)}
       <path d="M-104 0H104M0-104V104" stroke="#22d3ee" strokeOpacity=".16" />
-      <motion.g animate={reduced ? undefined : { rotate: 360 }} transition={{ repeat: Infinity, duration: 3.2, ease: 'linear' }}>
+      {/* Native SVG rotation: the pivot is explicit (0,0 is the radar centre). A CSS transform on a
+          <g> pivots around the centre of the group's own bounding box and makes the sweep wobble. */}
+      <g data-testid="radar-sweep">
+        {!reduced && (
+          <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="3.2s" repeatCount="indefinite" />
+        )}
         <path d="M0 0 L104 0 A104 104 0 0 0 76 -71 Z" fill="url(#sweep)" />
         <path d="M0 0H104" stroke="#67e8f9" strokeWidth="1.5" />
-      </motion.g>
+      </g>
       {BLIPS.map(([x, y], i) => (
         <motion.circle key={i} cx={x} cy={y} r="3.2" fill="#67e8f9"
           initial={{ opacity: 0, scale: 0 }}

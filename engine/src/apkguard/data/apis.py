@@ -85,3 +85,12 @@ DYNAMIC_DNS_SUFFIXES = (
     ".duckdns.org", ".no-ip.org", ".no-ip.biz", ".ddns.net", ".hopto.org",
     ".zapto.org", ".serveo.net", ".ngrok.io", ".ngrok-free.app", ".trycloudflare.com",
 )
+
+# An API finding is only meaningful when the app also holds the matching role or permission
+# (requested with <uses-permission> or required by one of its own components).
+API_GATES: dict[str, set[str]] = {
+    "dex.accessibility_control": {"BIND_ACCESSIBILITY_SERVICE"},
+    "dex.device_admin_abuse": {"BIND_DEVICE_ADMIN"},
+    "dex.sms_api": {"SEND_SMS", "RECEIVE_SMS", "READ_SMS"},
+    "dex.package_install": {"REQUEST_INSTALL_PACKAGES"},
+}

@@ -52,7 +52,7 @@ def dropper_apk(work, debug_keystore):
     dex = b.build_dex(
         strings=[
             "https://api.telegram.org/bot123:ABC/sendMessage",
-            "http://8.8.8.8/gate.php",
+            "http://93.184.216.34/gate.php",
             "http://evil-host.duckdns.org/c2",
             "content://sms/inbox",
             "ro.kernel.qemu", "goldfish",

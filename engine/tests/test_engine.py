@@ -152,7 +152,7 @@ def test_api_findings(dropper_apk):
 def test_string_indicators(dropper_apk):
     report = analyze_apk(dropper_apk)
     assert {"strings.telegram_bot", "strings.ip_endpoint", "strings.dynamic_dns"} <= ids(report)
-    assert "8.8.8.8" in report.iocs["ips"]
+    assert "93.184.216.34" in report.iocs["ips"]
     assert "evil-host.duckdns.org" in report.iocs["domains"]
     assert "example.com" in report.iocs["domains"]
 

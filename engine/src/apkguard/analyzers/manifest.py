@@ -9,6 +9,7 @@ from ..models import Finding, Report, Severity
 
 MODULE = "manifest"
 ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
+PLATFORM_PREFIX = "android.permission."
 OLD_TARGET_SDK = 23  # below this, permissions are granted at install time
 
 
@@ -41,6 +42,19 @@ def _exported_components(xml) -> dict[str, list[str]]:
     return exposed
 
 
+def _component_permissions(app) -> set[str]:
+    """Sensitive platform permissions that components of the app require of their callers."""
+    found: set[str] = set()
+    if app is None:
+        return found
+    for tag in ("activity", "activity-alias", "service", "receiver", "provider"):
+        for comp in app.findall(tag):
+            guard = _attr(comp, "permission") or ""
+            if guard.startswith(PLATFORM_PREFIX) and guard[len(PLATFORM_PREFIX):] in SENSITIVE_PERMISSIONS:
+                found.add(guard[len(PLATFORM_PREFIX):])
+    return found
+
+
 def analyze(apk: APK, report: Report) -> None:
     permissions = sorted(set(apk.get_permissions()))
     report.permissions = permissions
@@ -55,21 +69,28 @@ def analyze(apk: APK, report: Report) -> None:
         "target_sdk": target_sdk,
     }
 
+    seen: set[str] = set()
     for permission in permissions:
-        short = permission.rsplit(".", 1)[-1]
+        # Only the platform's own namespace: launcher-badge permissions such as
+        # com.huawei.android.launcher.permission.WRITE_SETTINGS are not android.permission.WRITE_SETTINGS.
+        if not permission.startswith(PLATFORM_PREFIX):
+            continue
+        short = permission[len(PLATFORM_PREFIX):]
         severity = SENSITIVE_PERMISSIONS.get(short)
         if severity is not None:
-            report.add(
-                Finding(
-                    "manifest.permission",
-                    severity,
-                    MODULE,
-                    {"permission": short, "full_name": permission},
-                )
-            )
+            seen.add(short)
+            report.add(Finding("manifest.permission", severity, MODULE,
+                               {"permission": short, "full_name": permission}))
 
     xml = apk.get_android_manifest_xml()
     app = xml.find("application")
+    # Roles such as accessibility service or device admin are declared on a component, not requested
+    # with <uses-permission>, so reading only the latter misses the abuse that matters most.
+    component_perms = _component_permissions(app)
+    report.stats["component_permissions"] = sorted(component_perms)
+    for short in sorted(component_perms - seen):
+        report.add(Finding("manifest.permission", SENSITIVE_PERMISSIONS[short], MODULE,
+                           {"permission": short, "full_name": PLATFORM_PREFIX + short, "via": "component"}))
     if app is not None:
         if _attr(app, "debuggable") == "true":
             report.add(Finding("manifest.debuggable", Severity.MEDIUM, MODULE))

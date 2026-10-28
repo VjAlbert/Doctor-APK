@@ -10,6 +10,7 @@ from collections import Counter
 from pathlib import PurePosixPath
 
 from ..data.apis import PACKER_LIBS
+from ..data.sdks import KNOWN_SDK_PAYLOADS
 from ..models import Finding, Report, Severity
 
 MODULE = "payloads"
@@ -61,6 +62,7 @@ def _scan(zf: zipfile.ZipFile, report: Report) -> None:
     packers: set[str] = set()
     embedded: dict[str, list[dict]] = {"apk": [], "dex": [], "elf": []}
     blobs: list[str] = []
+    sdk_code: dict[str, list[str]] = {}
     native = 0
 
     for info in zf.infolist():
@@ -86,7 +88,10 @@ def _scan(zf: zipfile.ZipFile, report: Report) -> None:
         except (RuntimeError, NotImplementedError, zipfile.BadZipFile):
             continue
         kind = _kind(zf, info, head)
-        if kind:
+        sdk = next((n for prefix, n in KNOWN_SDK_PAYLOADS.items() if name.startswith(prefix)), None)
+        if kind and sdk:
+            sdk_code.setdefault(sdk, []).append(name)
+        elif kind:
             disguised = ext not in EXPECTED_EXEC_EXT
             embedded[kind].append({"name": name, "disguised": disguised})
         elif (info.file_size >= MIN_BLOB and ext not in COMPRESSED_EXT
@@ -104,6 +109,9 @@ def _scan(zf: zipfile.ZipFile, report: Report) -> None:
                 "files": [f["name"] for f in files[:5]],
                 "disguised": any(f["disguised"] for f in files),
             }))
+    if sdk_code:
+        report.add(Finding("payloads.known_sdk_code", Severity.LOW, MODULE, {
+            "sdks": sorted(sdk_code), "files": [f for fs in sdk_code.values() for f in fs][:5]}))
     if blobs:
         report.add(Finding("payloads.encrypted_blob", Severity.LOW, MODULE,
                            {"count": len(blobs), "files": blobs[:5]}))

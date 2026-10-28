@@ -140,7 +140,8 @@ def manifest_tree(
     children = [
         ("uses-sdk", {"android:minSdkVersion": 21, "android:targetSdkVersion": target_sdk}, []),
     ]
-    children += [("uses-permission", {"android:name": f"android.permission.{p}"}, []) for p in permissions]
+    children += [("uses-permission", {"android:name": p if "." in p else f"android.permission.{p}"}, [])
+                 for p in permissions]
     children.append(("application", app_attrs, app_children))
     return (
         "manifest",

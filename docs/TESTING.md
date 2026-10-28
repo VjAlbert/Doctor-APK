@@ -35,8 +35,10 @@ The first start can take several seconds while the bundled analysis engine unpac
 
 - The signature database is empty until the F-Droid import is run, so every package shows
   "Cannot be verified".
-- Risk weights and thresholds are provisional: they were tuned on small synthetic test apps, not on a
-  large corpus of real apps. Treat the score as a guide, not a measurement.
+- Risk weights and thresholds are provisional. They were first tuned on small synthetic apps; the first
+  real app analysed (an ad-supported IPTV player) exposed several false alarms, now fixed, and more are
+  likely with other real apps. Many weak signals alone never produce "Do not install". Treat the score
+  as a guide, not a measurement.
 - Static analysis cannot see code downloaded after installation, and a clean result is never a
   guarantee of safety.
 - The online VirusTotal check needs your own API key and has only been tested against simulated

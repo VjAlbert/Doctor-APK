@@ -16,6 +16,13 @@ from ..models import Finding, Report, Severity
 UNKNOWN = "unknown"
 MIN_SUBSTRING_KEYWORD = 5  # shorter keywords must match a whole token
 MIN_ANOMALOUS_FOR_MISMATCH = 2
+# Out-of-place permissions raise severity only for these. Location, storage or settings are
+# routinely requested by advertising SDKs in apps of every category, so they keep their own level.
+ESCALATE = {
+    "READ_SMS", "SEND_SMS", "RECEIVE_SMS", "SYSTEM_ALERT_WINDOW", "BIND_ACCESSIBILITY_SERVICE",
+    "BIND_DEVICE_ADMIN", "BIND_NOTIFICATION_LISTENER_SERVICE", "REQUEST_INSTALL_PACKAGES",
+    "READ_CALL_LOG", "READ_CONTACTS", "CALL_PHONE", "PROCESS_OUTGOING_CALLS", "RECORD_AUDIO",
+}
 
 
 @lru_cache(maxsize=1)
@@ -83,7 +90,7 @@ def apply(report: Report, category: dict) -> None:
             finding.params["profile"] = "expected"
         elif perm in expected:
             finding.params["profile"] = "neutral"
-        elif perm in unusual or finding.severity < Severity.MEDIUM:
+        elif perm in unusual or finding.severity < Severity.MEDIUM or perm not in ESCALATE:
             finding.params["profile"] = "unusual" if perm in unusual else "neutral"
         else:
             finding.severity = _raise(finding.severity)

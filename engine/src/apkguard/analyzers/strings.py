@@ -11,6 +11,9 @@ from ..models import Finding, Report, Severity
 from .dex import DexFacts
 
 MODULE = "strings"
+# Well-known public resolvers that libraries embed; not command-and-control servers.
+PUBLIC_DNS = {"8.8.8.8", "8.8.4.4", "1.1.1.1", "1.0.0.1", "9.9.9.9", "149.112.112.112",
+              "208.67.222.222", "208.67.220.220"}
 MAX_IOCS = 100
 
 URL_RE = re.compile(r"https?://[^\s\"'<>\\]{4,300}", re.IGNORECASE)
@@ -57,7 +60,7 @@ def analyze(facts: DexFacts, report: Report) -> None:
     if any(DISCORD_RE.search(s) for s in facts.strings):
         report.add(Finding("strings.discord_webhook", Severity.HIGH, MODULE))
 
-    ip_hosts = sorted(h for h in hosts if _public_ip(h))
+    ip_hosts = sorted(h for h in hosts if _public_ip(h) and h not in PUBLIC_DNS)
     if ip_hosts:
         report.add(Finding("strings.ip_endpoint", Severity.MEDIUM, MODULE,
                            {"count": len(ip_hosts), "examples": ip_hosts[:5]}))

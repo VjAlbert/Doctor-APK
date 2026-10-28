@@ -15,7 +15,8 @@ COMMUNICATION_CATEGORIES = {"messaging"}
 
 def detect(report: Report, category_id: str) -> None:
     ids = {f.id for f in report.findings}
-    perms = {p.rsplit(".", 1)[-1] for p in report.permissions}
+    perms = {p[len("android.permission."):] for p in report.permissions if p.startswith("android.permission.")}
+    perms |= set(report.stats.get("component_permissions", []))
     yara = {f.params.get("key") for f in report.findings if f.id == "yara.match"}
     exfil = sorted(ids & EXFIL)
     heavy = [f for f in report.findings
@@ -44,7 +45,11 @@ def detect(report: Report, category_id: str) -> None:
             and category_id not in COMMUNICATION_CATEGORIES:
         add("combo.spyware", Severity.HIGH, ["RECORD_AUDIO", *sorted(reach), *exfil])
 
-    evasion = ids & {"packer.known", "dex.anti_analysis"}
+    # Emulator checks and dynamic loading are routine in advertising SDKs, so they only form a
+    # "loader that hides" with a packer, or together with a hidden payload that is not a known SDK's.
+    evasion = ids & {"packer.known"}
+    if "dex.anti_analysis" in ids and hidden:
+        evasion |= {"dex.anti_analysis"}
     if "dex.dynamic_loading" in ids and evasion:
         add("combo.evasive_loader", Severity.HIGH, ["dex.dynamic_loading", *sorted(evasion)])
 

@@ -22,6 +22,7 @@ CAUTION_AT = 25
 REFUSE_AT = 60
 CRITICAL_FLOOR = 85
 MAX_REASONS = 3
+MIN_SERIOUS_TO_REFUSE = 2  # high-severity findings needed, besides the score, to refuse
 
 
 def _score(findings: list[Finding]) -> int:
@@ -53,7 +54,9 @@ def _reasons(findings: list[Finding]) -> list[Finding]:
 def compute(report: Report) -> dict:
     score = _score(report.findings)
     worst = max((f.severity for f in report.findings), default=Severity.INFO)
-    if worst == Severity.CRITICAL or score >= REFUSE_AT:
+    serious = sum(1 for f in report.findings if f.severity >= Severity.HIGH)
+    # Many low and medium signals add up to "caution" at most: ordinary ad-supported apps show a dozen.
+    if worst == Severity.CRITICAL or (score >= REFUSE_AT and serious >= MIN_SERIOUS_TO_REFUSE):
         verdict = "do_not_install"
         level = "critical" if worst == Severity.CRITICAL else "high"
     elif score >= CAUTION_AT:
