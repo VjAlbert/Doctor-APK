@@ -6,7 +6,9 @@ Every push to `main` runs the workflow in `.github/workflows/build.yml`. Open th
 **Actions**, and download the artifact for your system:
 
 - `apkguard-windows-latest` – NSIS installer (`.exe`).
-- `apkguard-ubuntu-22.04` – `.deb` and `.AppImage`.
+
+Linux installers are paused for now (the engine and the interface still run on Linux; only the packaged
+build is switched off).
 
 Builds are unsigned, so Windows SmartScreen will warn: choose "More info" then "Run anyway".
 The first start can take several seconds while the bundled analysis engine unpacks.

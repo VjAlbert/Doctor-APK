@@ -51,7 +51,7 @@ npm test                                  # UI logic tests
 
 ## Desktop packaging
 
-`packaging/build_engine.py` freezes the engine into a single executable, copied to `app/src-tauri/binaries/` under the name Tauri expects. The Tauri shell (`app/src-tauri`) starts it as a sidecar on a random loopback port and tells the UI which one. `.github/workflows/build.yml` runs the test suites and builds installers for Windows (NSIS) and Linux (deb, AppImage).
+`packaging/build_engine.py` freezes the engine into a single executable, copied to `app/src-tauri/binaries/` under the name Tauri expects. The Tauri shell (`app/src-tauri`) starts it as a sidecar on a random loopback port and tells the UI which one. `.github/workflows/build.yml` runs the test suites and builds the Windows installer (NSIS). Linux packaging (deb, AppImage) is paused for now.
 
 The optional VirusTotal check sends only the file's SHA-256, using a key you provide in Settings.
 
