@@ -43,7 +43,13 @@ export interface Report {
   permissions: string[]
   iocs: { urls?: string[]; domains?: string[]; ips?: string[] }
   stats: Record<string, unknown>
-  authenticity: { status: string; label: string; sources: string[] }
+  authenticity: {
+    status: string
+    label: string
+    sources: string[]
+    expected: { sha256: string; source: string }[]
+  }
+  reputation: { status: string; malicious?: number; suspicious?: number; total?: number; reason?: string }
   category: { id: string; source: string; confidence: string }
   verdict: Verdict
   findings: Finding[]
@@ -64,5 +70,5 @@ export type EngineEvent =
 
 /** Engine pipeline stages, in execution order. */
 export const MODULES = [
-  'ingest', 'manifest', 'certificate', 'authenticity', 'dex', 'strings', 'payloads', 'yara', 'scoring',
+  'ingest', 'manifest', 'certificate', 'authenticity', 'dex', 'strings', 'payloads', 'yara', 'reputation', 'scoring',
 ] as const

@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { formatSize, shortHash } from '../lib/format'
 import { useLang } from '../lib/lang'
 import { LEVEL_COLOR, SEVERITY_COLOR } from '../lib/severity'
-import { severityKey } from '../lib/ui'
+import { severityKey, type UiKey } from '../lib/ui'
 import { SEVERITIES, type Report, type VerdictId } from '../lib/types'
 import { AlertIcon, ArrowLeftIcon, BlockIcon, InfoIcon, ShieldIcon } from './Icons'
 import { Gauge } from './Gauge'
@@ -33,6 +33,7 @@ export function VerdictView({ report, onViewAll, onAnother }: Props) {
     [t('verdict.category'), verdict.text.category],
     [t('verdict.signature'), authenticity.label],
     [t('verdict.size'), formatSize(file.size)],
+    [t('verdict.online'), t(`rep.${report.reputation.status === 'known' ? 'known' : report.reputation.status}` as UiKey)],
     [t('verdict.hash'), shortHash(file.sha256, 6)],
   ]
 
@@ -98,7 +99,7 @@ export function VerdictView({ report, onViewAll, onAnother }: Props) {
       </div>
 
       <motion.dl initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-        className="glass mt-6 grid grid-cols-2 gap-x-6 gap-y-4 rounded-2xl px-6 py-5 md:grid-cols-3">
+        className="glass mt-6 grid grid-cols-2 gap-x-6 gap-y-4 rounded-2xl px-6 py-5 md:grid-cols-3 lg:grid-cols-4">
         {facts.map(([label, value]) => (
           <div key={label} className="min-w-0">
             <dt className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-dim">{label}</dt>

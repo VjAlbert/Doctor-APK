@@ -8,3 +8,4 @@ target/
 dist/
 build/
 *.jks
+packaging/*.spec

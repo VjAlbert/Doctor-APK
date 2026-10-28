@@ -54,6 +54,8 @@ def render_finding(finding: Finding, lang: str = DEFAULT_LANG) -> dict[str, str]
     base = _base(finding)
     params = {k: ", ".join(map(str, v)) if isinstance(v, list) else v
               for k, v in finding.params.items()}
+    if "reason" in params:
+        params["reason"] = t(f"reputation.reason.{params['reason']}", lang)
     category = finding.params.get("category")
     if category:
         params["category"] = category_name(category, lang)

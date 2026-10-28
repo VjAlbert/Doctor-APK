@@ -1,15 +1,21 @@
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { DropZone } from './components/DropZone'
 import { ErrorView } from './components/ErrorView'
 import { HistoryList } from './components/HistoryList'
-import { LockIcon } from './components/Icons'
+import { ExportMenu } from './components/ExportMenu'
+import { GearIcon, LockIcon } from './components/Icons'
+import { PermissionsView } from './components/PermissionsView'
+import { SettingsDrawer } from './components/SettingsDrawer'
+import { SignatureView } from './components/SignatureView'
+import { Tabs, type ResultView } from './components/Tabs'
 import { Logo } from './components/Logo'
 import { ScanView } from './components/ScanView'
 import { ThreatsView } from './components/ThreatsView'
 import { VerdictView } from './components/VerdictView'
 import { useAnalysis } from './hooks/useAnalysis'
 import { LangProvider, useLang } from './lib/lang'
+import { activeVtKey, loadSettings, saveSettings, type Settings } from './lib/settings'
 import type { Lang } from './lib/types'
 
 function LangToggle() {
@@ -50,8 +56,12 @@ function Home({ analysis }: { analysis: ReturnType<typeof useAnalysis> }) {
 
 function Screen() {
   const { lang, t } = useLang()
-  const analysis = useAnalysis(lang)
-  const [view, setView] = useState<'verdict' | 'threats'>('verdict')
+  const [settings, setSettings] = useState<Settings>(() => loadSettings())
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  useEffect(() => saveSettings(settings), [settings])
+  const vtKey = useMemo(() => activeVtKey(settings), [settings])
+  const analysis = useAnalysis(lang, vtKey)
+  const [view, setView] = useState<ResultView>('verdict')
   const { phase } = analysis
 
   const key = phase.kind === 'result' ? `result-${view}` : phase.kind
@@ -64,8 +74,16 @@ function Screen() {
         <div className="flex items-center gap-4">
           <span className="hidden font-mono text-[11px] uppercase tracking-[0.18em] text-dim sm:block">{t('tagline')}</span>
           <LangToggle />
+          <button type="button" onClick={() => setSettingsOpen(true)} aria-label={t('settings.open')} title={t('settings.open')}
+            className="grid size-8 place-items-center rounded-lg border border-line text-muted transition hover:text-ink"><GearIcon size={17} /></button>
         </div>
       </header>
+      {phase.kind === 'result' && (
+        <div className="flex flex-wrap items-center justify-between gap-3 px-8 pb-3">
+          <Tabs view={view} onChange={setView} />
+          <ExportMenu report={phase.report} />
+        </div>
+      )}
       <main className="min-h-0 flex-1 px-8 pb-4">
         <AnimatePresence mode="wait">
           <motion.div key={key} className="h-full" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
@@ -79,10 +97,14 @@ function Screen() {
               </div></div>
             )}
             {phase.kind === 'result' && view === 'threats' && <ThreatsView report={phase.report} onBack={() => setView('verdict')} />}
+            {phase.kind === 'result' && view === 'permissions' && <PermissionsView report={phase.report} />}
+            {phase.kind === 'result' && view === 'signature' && <SignatureView report={phase.report} />}
           </motion.div>
         </AnimatePresence>
       </main>
       <footer className="px-8 pb-4 text-center text-xs text-dim">{t('footer')}</footer>
+      <SettingsDrawer open={settingsOpen} settings={settings} onChange={setSettings} onClose={() => setSettingsOpen(false)}
+        onClearHistory={analysis.wipeHistory} />
     </div>
   )
 }

@@ -10,6 +10,7 @@ Static APK analyzer for non-experts: lists threats by severity in plain language
 - **M2** – Scoring: app-category permission profiles, signal combinations (SMS stealer, banking trojan, dropper, spyware...), 0-100 risk score and a three-state verdict (no known threats / caution / do not install). Weights are provisional until calibrated on real corpora.
 - **M3** – Authenticity: compares the signing certificate with a database of known fingerprints per package name. A different key against a *developer* key is a strong sign of tampering; against a *store* key (e.g. F-Droid re-signs most apps) it only means the APK came from another channel. The bundled database is currently **empty**: the F-Droid import is pending (see below).
 - **M4** – Desktop UI (React + Tailwind + Framer Motion): home with drag and drop and recent analyses, animated scan, verdict with risk gauge, detailed findings with severity filters and a technical-details switch. IT/EN interface. Talks to the engine through a local loopback bridge (`apkguard serve`); the Tauri shell and installers come with packaging.
+- **M5** – Signature and permission views, HTML report with print-to-PDF, settings drawer (optional VirusTotal hash lookup, history), engine reputation module, standalone engine executable (PyInstaller) and the Tauri desktop shell with CI builds for Windows and Linux.
 
 Extra YARA rules (`.yar`) can be loaded from a directory set in `APKGUARD_RULES_DIR`.
 
@@ -44,3 +45,9 @@ cd engine && apkguard serve --port 8765
 cd app && npm install && npm run dev      # http://127.0.0.1:5173
 npm test                                  # UI logic tests
 ```
+
+## Desktop packaging
+
+`packaging/build_engine.py` freezes the engine into a single executable, copied to `app/src-tauri/binaries/` under the name Tauri expects. The Tauri shell (`app/src-tauri`) starts it as a sidecar on a random loopback port and tells the UI which one. `.github/workflows/build.yml` runs the test suites and builds installers for Windows (NSIS) and Linux (deb, AppImage).
+
+The optional VirusTotal check sends only the file's SHA-256, using a key you provide in Settings.

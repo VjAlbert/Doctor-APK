@@ -23,6 +23,7 @@ from .ingest import MAX_FILE_SIZE, IngestError
 from .pipeline import analyze_apk
 from .scoring.profiles import categories
 
+VT_KEY = re.compile(r"^[A-Za-z0-9]{16,128}$")
 LOCAL_HOSTS = re.compile(r"^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$")
 LOCAL_ORIGINS = re.compile(r"^(https?://(127\.0\.0\.1|localhost|\[::1\])(:\d+)?|tauri://localhost|https?://tauri\.localhost)$")
 
@@ -63,7 +64,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(204)
         self._cors()
         self.send_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Filename")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Filename, X-VT-Key")
         self.end_headers()
 
     def do_GET(self) -> None:
@@ -108,7 +109,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Cache-Control", "no-store")
             self.end_headers()
             name = os.path.basename(unquote(self.headers.get("X-Filename", "")) or "upload.apk")
-            self._run(path, name, lang, category)
+            key = self.headers.get("X-VT-Key", "")
+            self._run(path, name, lang, category, key if VT_KEY.match(key) else None)
         finally:
             os.unlink(path)
 
@@ -123,9 +125,9 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self._emit({"event": "error", "code": code, "message": t(f"error.{code}", lang, **params)})
 
-    def _run(self, path: str, name: str, lang: str, category: str | None) -> None:
+    def _run(self, path: str, name: str, lang: str, category: str | None, vt_key: str | None) -> None:
         try:
-            report = analyze_apk(path, progress=self._emit, category=category)
+            report = analyze_apk(path, progress=self._emit, category=category, virustotal_key=vt_key)
         except IngestError as exc:
             return self._emit({"event": "error", "code": exc.code,
                                "message": t(f"error.{exc.code}", lang, **exc.params)})

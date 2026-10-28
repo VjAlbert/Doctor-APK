@@ -18,7 +18,7 @@ def analyze(report: Report, db: Database | None = None) -> None:
     db = db or load_database()
     package = report.app.get("package") or ""
     signers = {c["sha256"] for c in report.certificates}
-    auth = {"package": package, "status": "unknown", "sources": [], "matched": None}
+    auth = {"package": package, "status": "unknown", "sources": [], "matched": None, "expected": []}
     report.authenticity = auth
 
     if not signers:
@@ -29,6 +29,7 @@ def analyze(report: Report, db: Database | None = None) -> None:
         report.add(Finding("authenticity.unknown", Severity.INFO, MODULE, {"package": package}))
         return
 
+    auth["expected"] = [{"sha256": e.sha256, "source": db.display_name(e.source)} for e in entries[:5]]
     matched = [e for e in entries if e.sha256 in signers]
     names = sorted({db.display_name(e.source) for e in (matched or entries)})
     auth["sources"] = names

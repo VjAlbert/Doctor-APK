@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "sources": {
-    "curated": {"name": "the developer", "coverage": "developer"}
+    "curated": {"name": "Verified developer key", "coverage": "developer"}
   },
   "packages": {}
 }

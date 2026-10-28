@@ -15,7 +15,7 @@ export type Phase =
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-export function useAnalysis(lang: Lang) {
+export function useAnalysis(lang: Lang, vtKey?: string) {
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' })
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory())
   const fileRef = useRef<File | null>(null)
@@ -43,6 +43,7 @@ export function useAnalysis(lang: Lang) {
       try {
         const report = await analyzeFile(file, {
           lang,
+          vtKey,
           onProgress: (e) => {
             if (e.state === 'done') engineDone = Math.max(engineDone, e.index)
           },
@@ -66,7 +67,7 @@ export function useAnalysis(lang: Lang) {
         clearInterval(ticker)
       }
     },
-    [lang],
+    [lang, vtKey],
   )
 
   const openFromHistory = useCallback((entry: HistoryEntry) => {
@@ -97,7 +98,7 @@ export function useAnalysis(lang: Lang) {
     if (renderedLang.current === lang) return
     renderedLang.current = lang
     const id = ++runId.current
-    analyzeFile(fileRef.current, { lang })
+    analyzeFile(fileRef.current, { lang, vtKey })
       .then((report) => {
         if (runId.current === id) setPhase({ kind: 'result', report, fromHistory: false })
       })

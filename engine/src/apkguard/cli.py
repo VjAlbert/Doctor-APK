@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 
 from loguru import logger
@@ -36,6 +37,8 @@ def _build_parser() -> argparse.ArgumentParser:
     analyze.add_argument("--lang", choices=SUPPORTED, default="en")
     serve = sub.add_parser("serve", help="run the local bridge used by the desktop UI")
     serve.add_argument("--port", type=int, default=8765)
+    analyze.add_argument("--virustotal", action="store_true",
+                         help="look up the file hash on VirusTotal (key from $APKGUARD_VT_KEY)")
     analyze.add_argument("--category", choices=["auto", *categories()], default="auto",
                          help="app category used to judge permissions (default: guess it)")
     return parser
@@ -87,7 +90,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     try:
         report = analyze_apk(args.apk, progress=_write,
-                             category=None if args.category == "auto" else args.category)
+                             category=None if args.category == "auto" else args.category,
+                             virustotal_key=os.environ.get("APKGUARD_VT_KEY") if args.virustotal else None)
     except IngestError as exc:
         _write({"event": "error", "code": exc.code,
                 "message": t(f"error.{exc.code}", args.lang, **exc.params)})

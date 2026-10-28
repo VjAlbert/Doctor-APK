@@ -41,3 +41,18 @@ export const TrashIcon = (p: IconProps) => (
 export const TerminalIcon = (p: IconProps) => (
   <Svg {...p}><rect x="3" y="4" width="18" height="16" rx="2" /><path d="m7 9 3 3-3 3" /><path d="M13 15h4" /></Svg>
 )
+export const DownloadIcon = (p: IconProps) => (
+  <Svg {...p}><path d="M12 4v12" /><path d="m7 11 5 5 5-5" /><path d="M5 20h14" /></Svg>
+)
+export const PrinterIcon = (p: IconProps) => (
+  <Svg {...p}><path d="M7 9V4h10v5" /><rect x="4" y="9" width="16" height="8" rx="2" /><path d="M7 14h10v6H7z" /></Svg>
+)
+export const GearIcon = (p: IconProps) => (
+  <Svg {...p}><circle cx="12" cy="12" r="3" /><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8" /></Svg>
+)
+export const CopyIcon = (p: IconProps) => (
+  <Svg {...p}><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V6a2 2 0 0 1 2-2h9" /></Svg>
+)
+export const SearchIcon = (p: IconProps) => (
+  <Svg {...p}><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4-4" /></Svg>
+)
