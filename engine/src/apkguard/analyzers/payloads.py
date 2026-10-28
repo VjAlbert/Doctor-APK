@@ -13,6 +13,9 @@ from ..data.apis import PACKER_LIBS
 from ..data.sdks import KNOWN_SDK_PAYLOADS
 from ..models import Finding, Report, Severity
 
+HASHED_ASSET = re.compile(r"^[0-9a-f]{32,64}$")
+MIN_RESOURCE_PACK = 10  # hash-named blobs needed to call them a resource pack
+
 MODULE = "payloads"
 SAMPLE = 1024 * 1024  # bytes read for magic/entropy checks
 MAX_NESTED_APK = 50 * 1024 * 1024
@@ -29,6 +32,10 @@ COMPRESSED_EXT = {
     ".so", ".arsc", ".mid", ".wav", ".obb",
 }
 EXPECTED_EXEC_EXT = {".dex", ".jar", ".apk", ".so"}
+
+
+HASHED_ASSET = re.compile(r"^[0-9a-f]{32,64}$")
+MIN_RESOURCE_PACK = 10
 
 
 def entropy(data: bytes) -> float:
@@ -113,6 +120,9 @@ def _scan(zf: zipfile.ZipFile, report: Report) -> None:
         report.add(Finding("payloads.known_sdk_code", Severity.LOW, MODULE, {
             "sdks": sorted(sdk_code), "files": [f for fs in sdk_code.values() for f in fs][:5]}))
     if blobs:
-        report.add(Finding("payloads.encrypted_blob", Severity.LOW, MODULE,
+        # Dozens of content-hash-named assets are a game/resource pack, not a hidden payload.
+        hashed = sum(1 for b in blobs if HASHED_ASSET.match(b.rsplit("/", 1)[-1]))
+        packs = len(blobs) >= MIN_RESOURCE_PACK and hashed >= 0.8 * len(blobs)
+        report.add(Finding("payloads.encrypted_blob", Severity.INFO if packs else Severity.LOW, MODULE,
                            {"count": len(blobs), "files": blobs[:5]}))
     report.stats["native_libs"] = native
