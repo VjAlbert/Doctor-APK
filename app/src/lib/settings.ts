@@ -3,10 +3,12 @@ import type { KeyValueStore } from './history'
 export interface Settings {
   vtEnabled: boolean
   vtKey: string
+  /** The user chose to connect their own Claude Code for plain-language explanations. */
+  aiEnabled: boolean
 }
 
 const KEY = 'apkguard.settings'
-export const DEFAULT_SETTINGS: Settings = { vtEnabled: false, vtKey: '' }
+export const DEFAULT_SETTINGS: Settings = { vtEnabled: false, vtKey: '', aiEnabled: false }
 /** VirusTotal keys are 64 hex characters; the engine accepts 16-128 alphanumerics. */
 export const VT_KEY_PATTERN = /^[A-Za-z0-9]{16,128}$/
 
@@ -24,6 +26,7 @@ export function loadSettings(store: KeyValueStore | null = browserStore()): Sett
     return {
       vtEnabled: raw.vtEnabled === true,
       vtKey: typeof raw.vtKey === 'string' ? raw.vtKey : '',
+      aiEnabled: raw.aiEnabled === true,
     }
   } catch {
     return DEFAULT_SETTINGS

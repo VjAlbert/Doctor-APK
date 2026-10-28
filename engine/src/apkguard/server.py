@@ -17,6 +17,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 from loguru import logger
 
+from .ai import claude_cli, explain
 from .cli import build_report_event
 from .i18n import SUPPORTED, t
 from .ingest import MAX_FILE_SIZE, IngestError
@@ -24,6 +25,9 @@ from .pipeline import analyze_apk
 from .scoring.profiles import categories
 
 VT_KEY = re.compile(r"^[A-Za-z0-9]{16,128}$")
+MAX_JSON_BODY = 2 * 1024 * 1024
+AI_STATUS = {"not_installed": 503, "not_logged_in": 503, "busy": 429, "timeout": 504,
+             "too_large": 413, "failed": 502, "bad_request": 400}
 LOCAL_HOSTS = re.compile(r"^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$")
 LOCAL_ORIGINS = re.compile(r"^(https?://(127\.0\.0\.1|localhost|\[::1\])(:\d+)?|tauri://localhost|https?://tauri\.localhost)$")
 
@@ -70,14 +74,19 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         if not self._origin_ok():
             return self._json(403, {"error": "forbidden"})
-        if urlparse(self.path).path == "/health":
+        path = urlparse(self.path).path
+        if path == "/health":
             return self._json(200, {"ok": True, "categories": list(categories())})
+        if path == "/ai/status":
+            return self._json(200, claude_cli.status())
         self._json(404, {"error": "not found"})
 
     def do_POST(self) -> None:
         if not self._origin_ok():
             return self._json(403, {"error": "forbidden"})
         url = urlparse(self.path)
+        if url.path == "/ai/explain":
+            return self._ai_explain()
         if url.path != "/analyze":
             return self._json(404, {"error": "not found"})
         query = parse_qs(url.query)
@@ -113,6 +122,28 @@ class Handler(BaseHTTPRequestHandler):
             self._run(path, name, lang, category, key if VT_KEY.match(key) else None)
         finally:
             os.unlink(path)
+
+    def _ai_error(self, code: str, lang: str) -> None:
+        self._json(AI_STATUS.get(code, 502), {"error": code, "message": t(f"ai.error.{code}", lang)})
+
+    def _ai_explain(self) -> None:
+        """Explains a report in plain language through the user's own Claude Code."""
+        lang = "en"
+        try:
+            length = int(self.headers.get("Content-Length", ""))
+            if not 0 < length <= MAX_JSON_BODY:
+                return self._ai_error("too_large" if length > 0 else "bad_request", lang)
+            body = json.loads(self.rfile.read(length))
+            lang = body.get("lang") if body.get("lang") in SUPPORTED else "en"
+            system, prompt = explain.build(body["report"], lang)
+        except (ValueError, KeyError, TypeError, AttributeError):
+            return self._ai_error("bad_request", lang)
+        if body.get("dry_run") is True:  # lets the UI show exactly what would be sent
+            return self._json(200, {"system": system, "prompt": prompt})
+        try:
+            self._json(200, claude_cli.ask(system, prompt))
+        except claude_cli.AiError as exc:
+            self._ai_error(exc.code, lang)
 
     def _emit(self, event: dict) -> None:
         self.wfile.write((json.dumps(event, ensure_ascii=False) + "\n").encode())

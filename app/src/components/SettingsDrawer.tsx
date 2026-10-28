@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { useLang } from '../lib/lang'
+import type { AiStatus } from '../lib/ai'
 import { VT_KEY_PATTERN, type Settings } from '../lib/settings'
 
 interface Props {
@@ -9,9 +10,12 @@ interface Props {
   onChange: (settings: Settings) => void
   onClose: () => void
   onClearHistory: () => void
+  ai: { status: AiStatus | null; checking: boolean; error: string | null }
+  onConnectAi: () => void
+  onDisconnectAi: () => void
 }
 
-export function SettingsDrawer({ open, settings, onChange, onClose, onClearHistory }: Props) {
+export function SettingsDrawer({ open, settings, onChange, onClose, onClearHistory, ai, onConnectAi, onDisconnectAi }: Props) {
   const { t } = useLang()
   const [reveal, setReveal] = useState(false)
 
@@ -65,6 +69,41 @@ export function SettingsDrawer({ open, settings, onChange, onClose, onClearHisto
                   <p className="text-xs text-dim">{t('settings.vtStorage')}</p>
                 </div>
               )}
+            </section>
+
+            <section className="grid gap-3 border-t border-line pt-5" data-testid="ai-section">
+              <h3 className="font-medium">{t('ai.title')}</h3>
+              <p className="text-sm leading-relaxed text-muted">{t('ai.help')}</p>
+              {settings.aiEnabled && ai.status?.state === 'connected' ? (
+                <div className="grid gap-3">
+                  <p className="flex flex-wrap items-center gap-2 text-sm">
+                    <span className="size-2 rounded-full bg-ok" style={{ boxShadow: '0 0 8px #34d399' }} />
+                    <span className="font-medium text-ok">{t('ai.connected')}</span>
+                    <span className="text-muted">
+                      {ai.status.auth === 'subscription' ? t('ai.viaSubscription') : ai.status.auth === 'api_key' ? t('ai.viaApiKey') : t('ai.viaOther')}
+                    </span>
+                    {ai.status.version && <span className="font-mono text-xs text-dim">{ai.status.version}</span>}
+                  </p>
+                  <button type="button" onClick={onDisconnectAi} className="w-fit rounded-xl border border-line-strong px-4 py-2 text-sm text-muted hover:text-ink">{t('ai.disconnect')}</button>
+                </div>
+              ) : (
+                <div className="grid gap-3">
+                  <button type="button" onClick={onConnectAi} disabled={ai.checking}
+                    className="w-fit rounded-xl px-4 py-2 text-sm font-semibold transition hover:brightness-110 disabled:opacity-60"
+                    style={{ color: '#d8b4fe', background: 'rgb(139 92 246 / .14)', border: '1px solid rgb(139 92 246 / .45)' }}>
+                    {ai.checking ? t('ai.checking') : t('ai.connect')}
+                  </button>
+                  {ai.status?.state === 'not_installed' && (
+                    <p className="text-sm text-caution" role="status">
+                      {t('ai.notInstalled')}{' '}
+                      <a className="underline" href="https://code.claude.com/docs/en/quickstart" target="_blank" rel="noreferrer noopener">{t('ai.installHow')}</a>
+                    </p>
+                  )}
+                  {ai.status?.state === 'not_logged_in' && <p className="text-sm text-caution" role="status">{t('ai.notLoggedIn')}</p>}
+                  {ai.error && <p className="text-sm text-caution" role="alert">{ai.error}</p>}
+                </div>
+              )}
+              <p className="text-xs leading-relaxed text-dim">{t('ai.privacy')}</p>
             </section>
 
             <section className="grid gap-2 border-t border-line pt-5">

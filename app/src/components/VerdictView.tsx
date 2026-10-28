@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import type { ReactNode } from 'react'
 import { formatSize, shortHash } from '../lib/format'
 import { useLang } from '../lib/lang'
 import { LEVEL_COLOR, SEVERITY_COLOR } from '../lib/severity'
@@ -18,9 +19,11 @@ interface Props {
   report: Report
   onViewAll: () => void
   onAnother: () => void
+  /** Optional content under the action buttons (e.g. the AI explanation). */
+  extra?: ReactNode
 }
 
-export function VerdictView({ report, onViewAll, onAnother }: Props) {
+export function VerdictView({ report, onViewAll, onAnother, extra }: Props) {
   const { t } = useLang()
   const { verdict, app, file, authenticity } = report
   const color = LEVEL_COLOR[verdict.level]
@@ -95,6 +98,7 @@ export function VerdictView({ report, onViewAll, onAnother }: Props) {
               <ArrowLeftIcon size={16} />{t('verdict.another')}
             </button>
           </div>
+          {extra}
         </section>
       </div>
 

@@ -1,4 +1,11 @@
 {
+  "ai.error.bad_request": "Invalid request.",
+  "ai.error.busy": "A request is already running: wait for it to finish.",
+  "ai.error.failed": "Could not get an answer from Claude.",
+  "ai.error.not_installed": "Claude Code does not seem to be installed on this computer.",
+  "ai.error.not_logged_in": "Claude Code is installed but you are not signed in to your Claude account.",
+  "ai.error.timeout": "Claude did not answer in time. Try again.",
+  "ai.error.too_large": "The summary to send is too large.",
   "authenticity.status.match": "Signature verified",
   "authenticity.status.mismatch": "Signature mismatch",
   "authenticity.status.other_channel": "Different signature (other source)",

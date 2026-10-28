@@ -33,9 +33,9 @@ export async function resolveEngineBase(deps: BaseDeps): Promise<string> {
 
 let cachedBase: Promise<string> | null = null
 
-function engineBase(): Promise<string> {
+export function engineBase(): Promise<string> {
   cachedBase ??= resolveEngineBase({
-    isTauri: '__TAURI_INTERNALS__' in window,
+    isTauri: typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window,
     invoke: async (command) => (await import('@tauri-apps/api/core')).invoke(command),
     sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
     devBase: DEV_BASE,

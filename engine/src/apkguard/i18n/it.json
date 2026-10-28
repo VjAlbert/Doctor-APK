@@ -1,4 +1,11 @@
 {
+  "ai.error.bad_request": "Richiesta non valida.",
+  "ai.error.busy": "Una richiesta è già in corso: attendi che finisca.",
+  "ai.error.failed": "Non è stato possibile ottenere una risposta da Claude.",
+  "ai.error.not_installed": "Claude Code non risulta installato su questo computer.",
+  "ai.error.not_logged_in": "Claude Code è installato ma non hai effettuato l'accesso al tuo account Claude.",
+  "ai.error.timeout": "Claude non ha risposto in tempo. Riprova.",
+  "ai.error.too_large": "Il riepilogo da inviare è troppo grande.",
   "authenticity.status.match": "Firma verificata",
   "authenticity.status.mismatch": "Firma non coincidente",
   "authenticity.status.other_channel": "Firma diversa (altra fonte)",

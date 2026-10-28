@@ -1,7 +1,8 @@
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DropZone } from './components/DropZone'
 import { ErrorView } from './components/ErrorView'
+import { ExplainPanel } from './components/ExplainPanel'
 import { HistoryList } from './components/HistoryList'
 import { ExportMenu } from './components/ExportMenu'
 import { GearIcon, LockIcon } from './components/Icons'
@@ -14,6 +15,8 @@ import { ScanView } from './components/ScanView'
 import { ThreatsView } from './components/ThreatsView'
 import { VerdictView } from './components/VerdictView'
 import { useAnalysis } from './hooks/useAnalysis'
+import { getAiStatus, type AiStatus } from './lib/ai'
+import { EngineError } from './lib/client'
 import { LangProvider, useLang } from './lib/lang'
 import { activeVtKey, loadSettings, saveSettings, type Settings } from './lib/settings'
 import type { Lang } from './lib/types'
@@ -60,6 +63,31 @@ function Screen() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   useEffect(() => saveSettings(settings), [settings])
   const vtKey = useMemo(() => activeVtKey(settings), [settings])
+  const [aiStatus, setAiStatus] = useState<AiStatus | null>(null)
+  const [aiChecking, setAiChecking] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
+
+  const checkAi = useCallback(async (connect: boolean) => {
+    setAiChecking(true)
+    setAiError(null)
+    try {
+      const status = await getAiStatus()
+      setAiStatus(status)
+      // Consent is recorded only when the user pressed Connect and a signed-in Claude Code was found.
+      if (connect) setSettings((s) => ({ ...s, aiEnabled: status.state === 'connected' }))
+    } catch (error) {
+      setAiStatus(null)
+      setAiError(error instanceof EngineError ? error.message : String(error))
+    } finally {
+      setAiChecking(false)
+    }
+  }, [])
+
+  // Re-check quietly when the app starts with the feature already enabled.
+  useEffect(() => {
+    if (settings.aiEnabled) void checkAi(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const analysis = useAnalysis(lang, vtKey)
   const [view, setView] = useState<ResultView>('verdict')
   const { phase } = analysis
@@ -93,7 +121,8 @@ function Screen() {
             {phase.kind === 'error' && <div className="flex h-full items-center"><ErrorView code={phase.code} message={phase.message} onRetry={analysis.retry} onBack={goHome} /></div>}
             {phase.kind === 'result' && view === 'verdict' && (
               <div className="scroll h-full overflow-y-auto pb-8"><div className="flex min-h-full items-center">
-                <VerdictView report={phase.report} onViewAll={() => setView('threats')} onAnother={goHome} />
+                <VerdictView report={phase.report} onViewAll={() => setView('threats')} onAnother={goHome}
+                  extra={settings.aiEnabled && aiStatus?.state === 'connected' ? <ExplainPanel report={phase.report} /> : undefined} />
               </div></div>
             )}
             {phase.kind === 'result' && view === 'threats' && <ThreatsView report={phase.report} onBack={() => setView('verdict')} />}
@@ -104,7 +133,10 @@ function Screen() {
       </main>
       <footer className="px-8 pb-4 text-center text-xs text-dim">{t('footer')}</footer>
       <SettingsDrawer open={settingsOpen} settings={settings} onChange={setSettings} onClose={() => setSettingsOpen(false)}
-        onClearHistory={analysis.wipeHistory} />
+        onClearHistory={analysis.wipeHistory}
+        ai={{ status: aiStatus, checking: aiChecking, error: aiError }}
+        onConnectAi={() => void checkAi(true)}
+        onDisconnectAi={() => setSettings((s) => ({ ...s, aiEnabled: false }))} />
     </div>
   )
 }

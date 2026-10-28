@@ -11,6 +11,7 @@ Static APK analyzer for non-experts: lists threats by severity in plain language
 - **M3** – Authenticity: compares the signing certificate with a database of known fingerprints per package name. A different key against a *developer* key is a strong sign of tampering; against a *store* key (e.g. F-Droid re-signs most apps) it only means the APK came from another channel. The bundled database is currently **empty**: the F-Droid import is pending (see below).
 - **M4** – Desktop UI (React + Tailwind + Framer Motion): home with drag and drop and recent analyses, animated scan, verdict with risk gauge, detailed findings with severity filters and a technical-details switch. IT/EN interface. Talks to the engine through a local loopback bridge (`apkguard serve`); the Tauri shell and installers come with packaging.
 - **M5** – Signature and permission views, HTML report with print-to-PDF, settings drawer (optional VirusTotal hash lookup, history), engine reputation module, standalone engine executable (PyInstaller) and the Tauri desktop shell with CI builds for Windows and Linux.
+- **AI explanations (experimental)** – A "Connect Claude" button in Settings detects the user's own, already signed-in Claude Code and uses it to explain a report in plain language. APKGuard never touches credentials: it only asks the program for its status and runs it with every tool disabled, in an empty throw-away directory, one request at a time. Only an analysis summary is sent (never the file or its code), and the UI can show exactly what.
 
 Extra YARA rules (`.yar`) can be loaded from a directory set in `APKGUARD_RULES_DIR`.
 
@@ -51,3 +52,8 @@ npm test                                  # UI logic tests
 `packaging/build_engine.py` freezes the engine into a single executable, copied to `app/src-tauri/binaries/` under the name Tauri expects. The Tauri shell (`app/src-tauri`) starts it as a sidecar on a random loopback port and tells the UI which one. `.github/workflows/build.yml` runs the test suites and builds installers for Windows (NSIS) and Linux (deb, AppImage).
 
 The optional VirusTotal check sends only the file's SHA-256, using a key you provide in Settings.
+
+
+## Using Claude from APKGuard
+
+The explanations run through the unmodified Claude Code the user installed and signed in to. This follows Anthropic's published rules for products that run Claude Code (see "Can customers offer Claude Code in their products?" and "Authentication and credential use" in Anthropic's Claude Code legal and compliance page): users sign in through Anthropic's own flow, usage is billed to the user's own plan, and APKGuard neither collects nor relays credentials. Before distributing the app publicly, confirm the arrangement with Anthropic, as that page recommends.

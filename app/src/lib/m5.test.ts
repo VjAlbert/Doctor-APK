@@ -80,18 +80,18 @@ describe('settings', () => {
 
   it('round-trips and defaults safely', () => {
     const s = store()
-    saveSettings({ vtEnabled: true, vtKey: key }, s)
-    expect(loadSettings(s)).toEqual({ vtEnabled: true, vtKey: key })
+    saveSettings({ vtEnabled: true, vtKey: key, aiEnabled: true }, s)
+    expect(loadSettings(s)).toEqual({ vtEnabled: true, vtKey: key, aiEnabled: true })
     expect(loadSettings(store('{broken'))).toEqual(DEFAULT_SETTINGS)
     expect(loadSettings(null)).toEqual(DEFAULT_SETTINGS)
     expect(loadSettings(store('{"vtEnabled":"yes","vtKey":5}'))).toEqual(DEFAULT_SETTINGS)
   })
 
   it('only offers a key when the check is on and the key looks valid', () => {
-    expect(activeVtKey({ vtEnabled: true, vtKey: ` ${key} ` })).toBe(key)
-    expect(activeVtKey({ vtEnabled: false, vtKey: key })).toBeUndefined()
-    expect(activeVtKey({ vtEnabled: true, vtKey: 'short' })).toBeUndefined()
-    expect(activeVtKey({ vtEnabled: true, vtKey: 'bad key with spaces and symbols!!' })).toBeUndefined()
+    expect(activeVtKey({ vtEnabled: true, vtKey: ` ${key} `, aiEnabled: false })).toBe(key)
+    expect(activeVtKey({ vtEnabled: false, vtKey: key, aiEnabled: false })).toBeUndefined()
+    expect(activeVtKey({ vtEnabled: true, vtKey: 'short', aiEnabled: false })).toBeUndefined()
+    expect(activeVtKey({ vtEnabled: true, vtKey: 'bad key with spaces and symbols!!', aiEnabled: false })).toBeUndefined()
   })
 })
 
