@@ -1,0 +1,136 @@
+import type { Lang, Severity } from './types'
+
+const it = {
+  'tagline': 'Analisi APK, tutta in locale',
+  'home.title': 'Controlla un APK prima di installarlo',
+  'home.subtitle': "L'analisi avviene sul tuo computer: il file non viene mai caricato online.",
+  'home.drop': 'Trascina qui un file APK',
+  'home.dropActive': 'Rilascia per analizzare',
+  'home.browse': 'oppure sceglilo dal computer',
+  'home.formats': 'APK · XAPK · APKM',
+  'home.recent': 'Analisi recenti',
+  'home.empty': 'Le analisi che fai compariranno qui.',
+  'home.clear': 'Cancella cronologia',
+  'home.local': '100% locale',
+  'home.noUpload': 'Nessun upload',
+  'home.explained': 'Spiegato semplice',
+  'scan.title': 'Analisi in corso',
+  'scan.subtitle': 'Sto controllando ogni parte del file',
+  'verdict.risk': 'Rischio',
+  'verdict.why': 'I motivi principali',
+  'verdict.nothing': 'Nessun segnale rilevante.',
+  'verdict.viewAll': 'Vedi tutti i risultati',
+  'verdict.another': 'Analizza un altro file',
+  'verdict.package': 'Pacchetto',
+  'verdict.version': 'Versione',
+  'verdict.category': 'Categoria',
+  'verdict.signature': 'Firma',
+  'verdict.size': 'Dimensione',
+  'verdict.hash': 'SHA-256',
+  'threats.title': 'Risultati dettagliati',
+  'threats.back': 'Indietro',
+  'threats.all': 'Tutti',
+  'threats.technical': 'Dettagli tecnici',
+  'threats.what': 'Cosa significa',
+  'threats.advice': 'Cosa fare',
+  'threats.empty': 'Nessun risultato per questo filtro.',
+  'threats.showInfo': 'Mostra anche le informazioni',
+  'threats.module': 'Modulo',
+  'threats.id': 'Codice',
+  'error.title': 'Non riesco ad analizzare il file',
+  'error.engine': 'Il motore di analisi non risponde. Avvialo con il comando qui sotto e riprova.',
+  'error.retry': 'Riprova',
+  'error.back': 'Torna all\'inizio',
+  'footer': "Un'analisi statica aiuta, ma non garantisce la sicurezza di un'app.",
+  'sev.critical': 'Critico',
+  'sev.high': 'Alto',
+  'sev.medium': 'Medio',
+  'sev.low': 'Basso',
+  'sev.info': 'Info',
+  'module.ingest': 'Lettura del file',
+  'module.manifest': 'Permessi e componenti',
+  'module.certificate': 'Certificato di firma',
+  'module.authenticity': 'Autenticità della firma',
+  'module.dex': "Codice dell'app",
+  'module.strings': 'Indirizzi e testi',
+  'module.payloads': 'File nascosti',
+  'module.yara': 'Regole di rilevamento',
+  'module.scoring': 'Valutazione del rischio',
+} as const
+
+export type UiKey = keyof typeof it
+
+const en: Record<UiKey, string> = {
+  'tagline': 'APK analysis, fully local',
+  'home.title': 'Check an APK before you install it',
+  'home.subtitle': 'The analysis runs on your computer: the file is never uploaded anywhere.',
+  'home.drop': 'Drop an APK file here',
+  'home.dropActive': 'Release to analyze',
+  'home.browse': 'or choose it from your computer',
+  'home.formats': 'APK · XAPK · APKM',
+  'home.recent': 'Recent analyses',
+  'home.empty': 'The analyses you run will show up here.',
+  'home.clear': 'Clear history',
+  'home.local': '100% local',
+  'home.noUpload': 'No upload',
+  'home.explained': 'Plain language',
+  'scan.title': 'Analyzing',
+  'scan.subtitle': 'Checking every part of the file',
+  'verdict.risk': 'Risk',
+  'verdict.why': 'Main reasons',
+  'verdict.nothing': 'No relevant signals.',
+  'verdict.viewAll': 'View all results',
+  'verdict.another': 'Analyze another file',
+  'verdict.package': 'Package',
+  'verdict.version': 'Version',
+  'verdict.category': 'Category',
+  'verdict.signature': 'Signature',
+  'verdict.size': 'Size',
+  'verdict.hash': 'SHA-256',
+  'threats.title': 'Detailed results',
+  'threats.back': 'Back',
+  'threats.all': 'All',
+  'threats.technical': 'Technical details',
+  'threats.what': 'What it means',
+  'threats.advice': 'What to do',
+  'threats.empty': 'No results for this filter.',
+  'threats.showInfo': 'Also show informational items',
+  'threats.module': 'Module',
+  'threats.id': 'Code',
+  'error.title': "I can't analyze this file",
+  'error.engine': 'The analysis engine is not responding. Start it with the command below and try again.',
+  'error.retry': 'Try again',
+  'error.back': 'Back to start',
+  'footer': "Static analysis helps, but it can't guarantee an app is safe.",
+  'sev.critical': 'Critical',
+  'sev.high': 'High',
+  'sev.medium': 'Medium',
+  'sev.low': 'Low',
+  'sev.info': 'Info',
+  'module.ingest': 'Reading the file',
+  'module.manifest': 'Permissions and components',
+  'module.certificate': 'Signing certificate',
+  'module.authenticity': 'Signature authenticity',
+  'module.dex': 'App code',
+  'module.strings': 'Addresses and strings',
+  'module.payloads': 'Hidden files',
+  'module.yara': 'Detection rules',
+  'module.scoring': 'Risk assessment',
+}
+
+const dictionaries: Record<Lang, Record<UiKey, string>> = { it, en }
+
+export function translate(lang: Lang, key: UiKey): string {
+  return dictionaries[lang][key]
+}
+
+export const severityKey = (severity: Severity): UiKey => `sev.${severity}` as UiKey
+export const moduleKey = (module: string): UiKey => `module.${module}` as UiKey
+
+export function detectLang(navigatorLang: string | undefined): Lang {
+  return navigatorLang?.toLowerCase().startsWith('it') ? 'it' : 'en'
+}
+
+export function missingTranslations(): UiKey[] {
+  return (Object.keys(it) as UiKey[]).filter((k) => !en[k])
+}

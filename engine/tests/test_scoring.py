@@ -258,3 +258,15 @@ def test_cli_category_flag(torch_apk, capsys):
     assert cli.main(["analyze", str(torch_apk), "--category", "messaging"]) == 0
     final = json.loads(capsys.readouterr().out.splitlines()[-1])["report"]
     assert final["category"]["source"] == "user"
+
+
+def test_descriptions_do_not_leak_internal_ids(dropper_apk, torch_apk, suspicious_apk):
+    """Technical ids belong in the technical view, not in plain-language texts."""
+    for apk in (dropper_apk, torch_apk, suspicious_apk):
+        report = analyze_apk(apk)
+        known = {f.id for f in report.findings}
+        for finding in report.findings:
+            for lang in SUPPORTED:
+                text = render_finding(finding, lang)
+                for part in ("title", "description", "advice"):
+                    assert not any(fid in text[part] for fid in known), (finding.id, lang, text[part])

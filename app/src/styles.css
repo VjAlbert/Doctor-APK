@@ -1,0 +1,72 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+
+@theme {
+  --font-sans: "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --color-bg: #070b11;
+  --color-surface: #0d1420;
+  --color-surface-2: #121c2b;
+  --color-line: rgb(148 197 255 / 0.12);
+  --color-line-strong: rgb(148 197 255 / 0.24);
+  --color-ink: #e6edf6;
+  --color-muted: #8a9bb2;
+  --color-dim: #5b6b82;
+  --color-cyan: #22d3ee;
+  --color-ok: #34d399;
+  --color-caution: #fbbf24;
+  --color-danger: #ff5c5c;
+}
+
+:root { color-scheme: dark; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* Atmosphere: soft glows and a faint grid, behind everything. */
+.backdrop {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(900px 500px at 15% -10%, rgb(34 211 238 / 0.10), transparent 60%),
+    radial-gradient(800px 500px at 100% 110%, rgb(139 92 246 / 0.10), transparent 60%),
+    var(--color-bg);
+}
+.backdrop::after {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgb(148 197 255 / 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(148 197 255 / 0.045) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+}
+
+.glass {
+  background: linear-gradient(180deg, rgb(18 28 43 / 0.78), rgb(13 20 32 / 0.78));
+  border: 1px solid var(--color-line);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 20px 50px -20px rgb(0 0 0 / 0.6);
+}
+
+.scroll { scrollbar-width: thin; scrollbar-color: rgb(148 197 255 / 0.25) transparent; }
+
+:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 3px; border-radius: 6px; }
+
+@keyframes borderflow { to { background-position: 200% 0; } }
+.drop-ring {
+  background:
+    linear-gradient(var(--color-surface), var(--color-surface)) padding-box,
+    linear-gradient(90deg, rgb(34 211 238 / 0.15), rgb(34 211 238 / 0.9), rgb(139 92 246 / 0.6), rgb(34 211 238 / 0.15)) border-box;
+  background-size: auto, 200% 100%;
+  border: 1.5px solid transparent;
+  animation: borderflow 6s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) { .drop-ring { animation: none; } }
