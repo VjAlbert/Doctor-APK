@@ -63,7 +63,7 @@ def code_map(index: CodeIndex, lang: str) -> dict:
         "links": [{"id": cid, "title": t(f"capability.{cid}.title", lang)} for cid in e.links],
     } for e in index.entry_points]
     entries.sort(key=lambda e: (e["kind"] != "launcher", not e["links"], e["name"]))
-    return {"id": index.sha256, "package": index.package, "stats": index.stats,
+    return {"id": index.sha256, "package": index.package, "stats": index.stats, "timings": index.timings,
             "capabilities": capabilities, "entry_points": entries}
 
 

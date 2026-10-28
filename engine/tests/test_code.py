@@ -46,6 +46,12 @@ def test_entry_points_and_their_links(idx):
     assert receiver.triggers == ["sms_received"] and receiver.links == ["dex.sms_api"]
 
 
+def test_phases_are_timed(idx):
+    assert set(idx.timings) == {"decode_ms", "xref_ms", "rules_ms"}
+    assert all(isinstance(v, int) and v >= 0 for v in idx.timings.values())
+    assert narrate.code_map(idx, "en")["timings"] == idx.timings
+
+
 def test_stats(idx):
     assert idx.stats == {"classes": 5, "methods": 11, "dex_files": 1}
 

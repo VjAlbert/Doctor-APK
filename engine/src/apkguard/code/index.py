@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import time
 from dataclasses import dataclass, field
 
 from androguard.core.analysis.analysis import Analysis
@@ -47,6 +48,7 @@ class CodeIndex:
     capabilities: dict[str, list[Caller]]
     entry_points: list[EntryPoint]
     stats: dict[str, int]
+    timings: dict[str, int] = field(default_factory=dict)  # milliseconds per phase
 
 
 def _is_third_party(cls: str) -> bool:
@@ -108,13 +110,16 @@ def build_index(apk: APK, sha256: str) -> CodeIndex:
     if sum(map(len, blobs)) > MAX_DEX_BYTES:
         raise CodeError("too_large")
 
+    started = time.perf_counter()
     analysis = Analysis()
     for blob in blobs:
         try:
             analysis.add(DEX(blob))
         except Exception as exc:  # malformed or deliberately broken DEX
             raise CodeError("unreadable") from exc
+    decoded = time.perf_counter()
     analysis.create_xref()
+    linked = time.perf_counter()
 
     package = apk.get_package() or ""
     prefix = "L" + package.replace(".", "/") + "/" if package else ""
@@ -131,9 +136,12 @@ def build_index(apk: APK, sha256: str) -> CodeIndex:
             if any(c.cls == descriptor + ";" or c.cls.startswith(descriptor + "$") for c in callers):
                 point.links.append(cid)
 
+    finished = time.perf_counter()
     classes = [c for c in analysis.get_classes() if not c.is_external()]
     return CodeIndex(
         sha256=sha256, package=package, analysis=analysis, capabilities=capabilities, entry_points=points,
         stats={"classes": len(classes), "methods": sum(len(list(c.get_methods())) for c in classes),
                "dex_files": len(blobs)},
+        timings={"decode_ms": round((decoded - started) * 1000), "xref_ms": round((linked - decoded) * 1000),
+                 "rules_ms": round((finished - linked) * 1000)},
     )

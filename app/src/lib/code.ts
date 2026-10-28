@@ -26,6 +26,7 @@ export interface CodeMap {
   id: string
   package: string
   stats: { classes: number; methods: number; dex_files: number }
+  timings?: { decode_ms: number; xref_ms: number; rules_ms: number }
   capabilities: Capability[]
   entry_points: EntryPoint[]
 }

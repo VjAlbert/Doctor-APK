@@ -89,7 +89,16 @@ export function CodeView({ report, file, aiReady, onCreated }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [open, setOpen] = useState<Capability | null>(null)
   const [creating, setCreating] = useState(false)
+  const [elapsed, setElapsed] = useState(0)
   const harmful = report.verdict.id === 'do_not_install'
+
+  useEffect(() => {
+    if (!file || map) return
+    const started = Date.now()
+    setElapsed(0)
+    const timer = setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 500)
+    return () => clearInterval(timer)
+  }, [file, lang, map])
 
   useEffect(() => {
     if (!file) return
@@ -106,10 +115,13 @@ export function CodeView({ report, file, aiReady, onCreated }: Props) {
   if (error) return <p className="glass mx-auto mt-10 max-w-xl rounded-2xl p-6 text-center text-sm text-caution" role="alert">{error}</p>
   if (!map) {
     return (
-      <p className="mx-auto mt-16 flex items-center justify-center gap-3 text-sm text-muted">
-        <motion.span className="size-2.5 rounded-full bg-cyan" animate={{ opacity: [1, 0.25, 1] }} transition={{ repeat: Infinity, duration: 1 }} />
-        {t('code.loading')}
-      </p>
+      <div className="mx-auto mt-16 grid justify-items-center gap-2 text-sm text-muted" role="status">
+        <p className="flex items-center gap-3">
+          <motion.span className="size-2.5 rounded-full bg-cyan" animate={{ opacity: [1, 0.25, 1] }} transition={{ repeat: Infinity, duration: 1 }} />
+          {t('code.loading')} <span className="font-mono text-xs text-dim" data-testid="elapsed">{elapsed} {t('code.seconds')}</span>
+        </p>
+        {elapsed >= 5 && <p className="text-xs text-dim">{t('code.slow')}</p>}
+      </div>
     )
   }
 
@@ -118,7 +130,8 @@ export function CodeView({ report, file, aiReady, onCreated }: Props) {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{t('code.title')}</h1>
-          <p className="font-mono text-xs text-dim">{t('code.stats').replace('{c}', String(map.stats.classes)).replace('{m}', String(map.stats.methods))}</p>
+          <p className="font-mono text-xs text-dim">{t('code.stats').replace('{c}', String(map.stats.classes)).replace('{m}', String(map.stats.methods))}
+            {map.timings && ` · ${t('code.readIn')} ${((map.timings.decode_ms + map.timings.xref_ms + map.timings.rules_ms) / 1000).toFixed(1)} s (${(map.timings.decode_ms / 1000).toFixed(1)} + ${(map.timings.xref_ms / 1000).toFixed(1)} + ${(map.timings.rules_ms / 1000).toFixed(1)})`}</p>
         </div>
         <div className="text-right">
           <button type="button" disabled={harmful} onClick={() => setCreating(true)} data-testid="create-project"
