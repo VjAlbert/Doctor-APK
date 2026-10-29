@@ -81,7 +81,7 @@ def test_match_with_any_of_several_signers():
 
 def test_different_key_against_store_is_only_medium():
     status, found = run(report(fingerprints=(B,)), db({"com.acme.app": [{"sha256": A, "source": "src"}]}))
-    assert status == "other_channel" and found["authenticity.other_channel"].severity == Severity.MEDIUM
+    assert status == "other_channel" and found["authenticity.other_channel"].severity == Severity.LOW
 
 
 def test_different_key_against_developer_is_high():

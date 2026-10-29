@@ -29,7 +29,7 @@ COMPRESSED_EXT = {
     ".png", ".jpg", ".jpeg", ".webp", ".gif", ".mp3", ".mp4", ".ogg", ".m4a",
     ".webm", ".mkv", ".aac", ".flac", ".ttf", ".otf", ".woff", ".woff2",
     ".pdf", ".zip", ".gz", ".br", ".ogv", ".opus", ".jar", ".dex", ".apk",
-    ".so", ".arsc", ".mid", ".wav", ".obb",
+    ".so", ".arsc", ".mid", ".wav", ".obb", ".whl", ".ico", ".xz", ".7z", ".bz2",
 }
 EXPECTED_EXEC_EXT = {".dex", ".jar", ".apk", ".so"}
 

@@ -42,5 +42,5 @@ def analyze(report: Report, db: Database | None = None) -> None:
                            {"package": package, "sources": names}))
     else:
         auth["status"] = "other_channel"
-        report.add(Finding("authenticity.other_channel", Severity.MEDIUM, MODULE,
+        report.add(Finding("authenticity.other_channel", Severity.LOW, MODULE,
                            {"package": package, "sources": names}))
