@@ -2,8 +2,8 @@
 
 ## Getting a build
 
-Every push to `main` runs the workflow in `.github/workflows/build.yml`. Open the latest run under
-**Actions**, and download the artifact for your system:
+Every push to `main` runs the workflow in `.github/workflows/build.yml`, and the run summary lists the
+SHA-256 of the installer. Open the latest run under **Actions**, and download the artifact for your system:
 
 - `apkguard-windows-latest` – NSIS installer (`.exe`).
 
@@ -33,14 +33,12 @@ interface and the engine must show the same build.
    feature (decompiled code is approximate).
 5. **Connect Claude** (optional) – explanations in plain words; "Show what is sent" displays the exact
    text before you rely on it.
-6. **Projects** – from *How it works* choose *Create a project from this app* (tick the ownership
-   declaration), add an idea, let Claude prepare a change, review the differences, approve, then undo.
-   Apps judged harmful are refused on purpose.
 
 ## Known limits
 
-- The signature database is empty until the F-Droid import is run, so every package shows
-  "Cannot be verified".
+- The signature database covers F-Droid apps only (4,901 packages). Anything else shows "Cannot be
+  verified"; an F-Droid app signed by its developer shows "different signature (other source)" as a
+  low signal, because F-Droid often re-signs.
 - Risk weights and thresholds are provisional. They were first tuned on small synthetic apps; the first
   real app analysed (an ad-supported IPTV player) exposed several false alarms, now fixed, and more are
   likely with other real apps. Many weak signals alone never produce "Do not install". Treat the score
@@ -49,7 +47,6 @@ interface and the engine must show the same build.
   guarantee of safety.
 - The online VirusTotal check needs your own API key and has only been tested against simulated
   responses.
-- Generated starter projects are not compiled or verified.
 
 ## Running the tests
 

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320" role="img" aria-label="APKGuard: check an APK before you install it">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#050a14"/><stop offset="1" stop-color="#0b1626"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.18" cy="0.5" r="0.6">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity="0.28"/><stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#94c5ff" stroke-opacity="0.06"/>
+    </pattern>
+  </defs>
+  <rect width="1280" height="320" fill="url(#bg)"/>
+  <rect width="1280" height="320" fill="url(#grid)"/>
+  <rect width="1280" height="320" fill="url(#glow)"/>
+  <g transform="translate(96 84)">
+    <rect width="152" height="152" rx="34" fill="#0c1a2b" stroke="#22d3ee" stroke-opacity="0.55" stroke-width="2"/>
+    <path d="M76 30 118 46v34c0 26-17 44-42 54-25-10-42-28-42-54V46Z" fill="none" stroke="#22d3ee" stroke-width="7" stroke-linejoin="round"/>
+    <path d="m56 80 15 15 28-31" fill="none" stroke="#22d3ee" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="290" y="156" font-family="Inter, 'Segoe UI', Roboto, sans-serif" font-size="76" font-weight="700" fill="#e6edf6" letter-spacing="-1">APK<tspan fill="#22d3ee">Guard</tspan></text>
+  <text x="294" y="204" font-family="Inter, 'Segoe UI', Roboto, sans-serif" font-size="27" fill="#8a9bb2">Check an APK before you install it. Fully local, in plain language.</text>
+  <g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15" fill="#8a9bb2" letter-spacing="2">
+    <rect x="294" y="232" width="150" height="34" rx="17" fill="none" stroke="#94c5ff" stroke-opacity="0.25"/><text x="319" y="254">100% LOCAL</text>
+    <rect x="456" y="232" width="148" height="34" rx="17" fill="none" stroke="#94c5ff" stroke-opacity="0.25"/><text x="482" y="254">NO UPLOAD</text>
+    <rect x="616" y="232" width="190" height="34" rx="17" fill="none" stroke="#94c5ff" stroke-opacity="0.25"/><text x="640" y="254">IT &#183; EN</text>
+  </g>
+</svg>

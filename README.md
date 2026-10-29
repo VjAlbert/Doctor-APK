@@ -1,21 +1,76 @@
-# APKGuard
+<p align="center">
+  <img src="docs/assets/banner.svg" alt="APKGuard: check an APK before you install it" width="100%">
+</p>
 
-Static APK analyzer for non-experts: lists threats by severity in plain language, in Italian and English, entirely on the local machine.
+<p align="center">
+  <a href="https://github.com/VjAlbert/Doctor-APK/releases/latest"><img src="docs/assets/download.svg" alt="Download for Windows" width="300"></a>
+</p>
 
-## Status
+<p align="center">
+  <a href="https://github.com/VjAlbert/Doctor-APK/actions/workflows/build.yml"><img alt="build" src="https://img.shields.io/github/actions/workflow/status/VjAlbert/Doctor-APK/build.yml?branch=main&style=flat-square&color=22d3ee&labelColor=0b1626"></a>
+  <img alt="platform" src="https://img.shields.io/badge/platform-Windows-22d3ee?style=flat-square&labelColor=0b1626">
+  <img alt="languages" src="https://img.shields.io/badge/languages-IT%20%C2%B7%20EN-22d3ee?style=flat-square&labelColor=0b1626">
+  <img alt="analysis" src="https://img.shields.io/badge/analysis-100%25%20local-22d3ee?style=flat-square&labelColor=0b1626">
+</p>
 
-- **M0** – Python engine: ingest (hashes, ZIP validation, XAPK), manifest, signing certificate, line-delimited JSON CLI, IT/EN message catalogs.
-- **M1** – Code analysis: sensitive APIs in the DEX, packers and obfuscation, anti-analysis hints, indicators of compromise (URLs, IPs, Telegram/Discord exfiltration), hidden payloads inside the archive, generic YARA behaviour rules.
+**APKGuard** is a desktop app that inspects an Android APK *before* you install it and explains what it found in plain language: threats ranked by severity, what each permission really allows, who signed the app, and what the code can do. Nothing is uploaded; the analysis runs on your computer.
 
-- **M2** – Scoring: app-category permission profiles, signal combinations (SMS stealer, banking trojan, dropper, spyware...), 0-100 risk score and a three-state verdict (no known threats / caution / do not install). Weights are provisional until calibrated on real corpora.
-- **M3** – Authenticity: compares the signing certificate with a database of known fingerprints per package name. A different key against a *developer* key is a strong sign of tampering; against a *store* key (e.g. F-Droid re-signs most apps) it only means the APK came from another channel. The bundled database is currently **empty**: the F-Droid import is pending (see below).
-- **M4** – Desktop UI (React + Tailwind + Framer Motion): home with drag and drop and recent analyses, animated scan, verdict with risk gauge, detailed findings with severity filters and a technical-details switch. IT/EN interface. Talks to the engine through a local loopback bridge (`apkguard serve`); the Tauri shell and installers come with packaging.
-- **M5** – Signature and permission views, HTML report with print-to-PDF, settings drawer (optional VirusTotal hash lookup, history), engine reputation module, standalone engine executable (PyInstaller) and the Tauri desktop shell with CI builds for Windows.
-- **AI explanations (experimental)** – A "Connect Claude" button in Settings detects the user's own, already signed-in Claude Code and uses it to explain a report in plain language. APKGuard never touches credentials: it only asks the program for its status and runs it with every tool disabled, in an empty throw-away directory, one request at a time. Only an analysis summary is sent (never the file or its code), and the UI can show exactly what.
-- **How it works (code understanding)** – Reads the APK's code (cross-references and the bundled decompiler; no Java needed) to show what the app can do, where, and what starts it (launcher, boot, incoming SMS...). Read-only, with an approximate decompiled view per feature and optional plain-language explanations through the user's own Claude Code. Code and strings are treated as untrusted data in every prompt.
-- **Projects (ideas to reviewed changes)** – From an analysed app the owner (or someone with permission or a permissive licence) can create a project that holds a *specification* of what the app does, never its decompiled code. Anyone can add ideas in plain language and share them as a small file; Claude turns an idea into a proposed change; a person reviews the exact differences (with warnings for new web addresses, permissions and sensitive APIs) and approves or rejects it. Every approval can be undone. Apps judged harmful cannot be turned into projects. An experimental button asks Claude for a starter Android project (unbuilt, unverified).
+> Personal project, not a product for sale. A clean result is never a guarantee of safety (see [Limits](#limits)).
 
-Extra YARA rules (`.yar`) can be loaded from a directory set in `APKGUARD_RULES_DIR`.
+<p align="center">
+  <img src="docs/assets/verdict.png" alt="Verdict screen with risk gauge and main reasons" width="92%">
+</p>
+
+## What it does
+
+| | |
+|---|---|
+| **Verdict and risk score** | Three states (*no known threats*, *caution*, *do not install*) with a 0-100 gauge and the main reasons first. Many weak signals alone never produce "do not install". |
+| **Findings by severity** | Sensitive APIs, dynamic code loading, packers, anti-analysis tricks, hidden payloads inside the archive, suspicious indicators (URLs, IPs, Telegram or Discord exfiltration), generic YARA behaviour rules, crypto miners. Each finding says what it means and what to do. |
+| **Permissions in plain words** | Judged against the kind of app: a flashlight asking for SMS is far worse than a messenger asking for it. |
+| **Signature check** | Compares the signing certificate with a database of known fingerprints (4,901 F-Droid packages). A mismatch against a developer key points to tampering; against a store key it only means the APK came from another channel. |
+| **How it works** | Reads the code (cross-references and a built-in decompiler, no Java needed) and shows what the app can do, where, and what starts it (launcher, boot, incoming SMS...). Read-only. |
+| **Reports** | Save as HTML or print to PDF. History of recent analyses, with a notice when a saved result came from an older engine. |
+| **Italian and English** | The whole interface and every finding, switchable at any time. |
+
+<p align="center">
+  <img src="docs/assets/threats.png" alt="Findings list" width="48%">
+  <img src="docs/assets/signature.png" alt="Signature view" width="48%">
+</p>
+
+*Screenshots show a harmless synthetic test app built for the demo, not a real product.*
+
+## Optional: explanations with your own Claude
+
+A **Connect Claude** button in Settings detects a Claude Code that *you* installed and signed in to, and uses it to explain a report or a piece of code in plain language. APKGuard never sees or stores your credentials: it only asks that program for its status and runs it with every tool disabled, in an empty throw-away directory, one request at a time. Only an analysis summary is sent (never the file), and the interface can show you the exact text first. Code and strings from the analysed app are treated as untrusted data in every prompt. Without it, everything else works.
+
+## Install
+
+1. Download the installer from **[Releases](https://github.com/VjAlbert/Doctor-APK/releases/latest)** (or an artifact from the latest successful run under **Actions**).
+2. Check the download against the published SHA-256 (`Get-FileHash .\APKGuard-setup.exe`).
+3. Run it. The installer is **not code-signed yet**, so Chrome and Windows SmartScreen may warn: *Keep*, then *More info, Run anyway*.
+
+Upgrading: close APKGuard first. In **Settings, About** the interface and the engine must show the same build.
+
+## Limits
+
+- **Static analysis only.** It cannot see code downloaded after installation or advanced evasion.
+- **Provisional calibration.** Weights and thresholds were tuned on synthetic apps and a handful of real ones. Advertising libraries in ordinary apps and games still raise "caution" more often than they should. Treat the score as a guide, not a measurement.
+- **Signature database.** It covers F-Droid apps. Commercial apps (for example from Google Play) show "cannot be verified".
+- **VirusTotal lookup** (optional, your own key) has only been tested against simulated responses.
+- Windows only for now; the Linux build is paused.
+
+## Architecture
+
+```
+app/        Tauri 2 shell + React 19, Vite, Tailwind 4, Framer Motion (TypeScript)
+engine/     Python 3.13 engine: androguard, yara-python; CLI and a loopback HTTP bridge
+packaging/  PyInstaller one-file engine used as the Tauri sidecar
+tools/      Maintenance scripts (F-Droid signature import)
+docs/       Testing guide and README assets
+```
+
+The desktop shell starts the engine on a random loopback port and talks to it over newline-delimited JSON. Requests are accepted only from the app itself (Host and Origin checks).
 
 ## Development
 
@@ -29,35 +84,22 @@ apkguard analyze file.apk --lang en [--category flashlight]
 
 Tests need `keytool` and `jarsigner` (from a JDK) to build harmless fixture APKs.
 
-## Signature database
-
-`engine/src/apkguard/data/fingerprints.json` (generated from public sources) and `curated_fingerprints.json` (added by hand) share one format, documented in `data/fingerprints.py`. To add a verified entry, read the fingerprint from an official APK:
-
 ```bash
-apkguard fingerprint official.apk
+cd app && npm ci && npm run typecheck && npm test
 ```
 
-and add it to `curated_fingerprints.json` under the package name. A custom file can also be merged at runtime with `APKGUARD_FINGERPRINTS_FILE`.
+Extra YARA rules (`.yar`) can be loaded from a directory set in `APKGUARD_RULES_DIR`. A release is published automatically when a tag such as `v0.1.0` is pushed. See [docs/TESTING.md](docs/TESTING.md) for a manual test plan.
 
-## Running the UI (development)
+### Signature database
+
+`engine/src/apkguard/data/fingerprints.json` (generated) and `curated_fingerprints.json` (added by hand) share one format, documented in `data/fingerprints.py`. Regenerate the F-Droid part from a downloaded `index-v1.json`:
 
 ```bash
-# terminal 1: engine bridge (loopback only)
-cd engine && apkguard serve --port 8765
-# terminal 2: UI
-cd app && npm install && npm run dev      # http://127.0.0.1:5173
-npm test                                  # UI logic tests
+python tools/import_fdroid.py path/to/index-v1.json
 ```
 
-## Desktop packaging
+To add a verified entry, read the fingerprint from an official APK with `apkguard fingerprint official.apk` and add it to `curated_fingerprints.json`. A custom file can also be merged at runtime with `APKGUARD_FINGERPRINTS_FILE`.
 
-`packaging/build_engine.py` freezes the engine into a single executable, copied to `app/src-tauri/binaries/` under the name Tauri expects. The Tauri shell (`app/src-tauri`) starts it as a sidecar on a random loopback port and tells the UI which one. `.github/workflows/build.yml` runs the test suites and builds the Windows installer (NSIS). Linux packaging (deb, AppImage) is paused for now.
+## License
 
-The optional VirusTotal check sends only the file's SHA-256, using a key you provide in Settings.
-
-
-## Using Claude from APKGuard
-
-The explanations run through the unmodified Claude Code the user installed and signed in to. This follows Anthropic's published rules for products that run Claude Code (see "Can customers offer Claude Code in their products?" and "Authentication and credential use" in Anthropic's Claude Code legal and compliance page): users sign in through Anthropic's own flow, usage is billed to the user's own plan, and APKGuard neither collects nor relays credentials. Before distributing the app publicly, confirm the arrangement with Anthropic, as that page recommends.
-
-See [docs/TESTING.md](docs/TESTING.md) for how to get a build and what to try.
+All rights reserved. This is a personal project; no license to use, copy or distribute it is granted unless the author says so.
