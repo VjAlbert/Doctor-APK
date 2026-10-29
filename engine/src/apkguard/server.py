@@ -30,8 +30,6 @@ from .i18n import SUPPORTED, t
 from .ingest import MAX_FILE_SIZE, IngestError, ingest
 from .pipeline import analyze_apk
 from .scoring.profiles import categories
-from .workspace import WorkspaceError, service
-from .workspace.store import Workspace
 
 VT_KEY = re.compile(r"^[A-Za-z0-9]{16,128}$")
 MAX_JSON_BODY = 2 * 1024 * 1024
@@ -42,9 +40,6 @@ CODE_STATUS = {"no_code": 422, "too_large": 413, "unreadable": 422, "not_found":
 MAX_INDEXES = 2  # analysed apps kept in memory so the UI can ask follow-up questions
 _indexes: "OrderedDict[str, CodeIndex]" = OrderedDict()
 _indexes_lock = threading.Lock()
-WS_STATUS = {"not_found": 404, "stale": 409, "conflict": 409, "not_open": 409, "ownership": 403,
-             "malicious": 403, "bad_reply": 502, "nothing_to_undo": 409}
-WS_ROUTE = re.compile(r"^/workspaces(?:/([a-z0-9-]+)(?:/(file|ideas|undo|export\.zip|proposals)(?:/([0-9a-f]{12}|export|import)(?:/(draft|approve|reject))?)?)?)?$")
 LOCAL_HOSTS = re.compile(r"^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$")
 LOCAL_ORIGINS = re.compile(r"^(https?://(127\.0\.0\.1|localhost|\[::1\])(:\d+)?|tauri://localhost|https?://tauri\.localhost)$")
 
@@ -92,8 +87,6 @@ class Handler(BaseHTTPRequestHandler):
         if not self._origin_ok():
             return self._json(403, {"error": "forbidden"})
         path = urlparse(self.path).path
-        if path.startswith("/workspaces"):
-            return self._workspaces("GET", path, parse_qs(urlparse(self.path).query))
         if path == "/health":
             return self._json(200, {"ok": True, "categories": list(categories()), **version_info()})
         if path == "/ai/status":
@@ -107,8 +100,6 @@ class Handler(BaseHTTPRequestHandler):
         if not self._origin_ok():
             return self._json(403, {"error": "forbidden"})
         url = urlparse(self.path)
-        if url.path.startswith("/workspaces"):
-            return self._workspaces("POST", url.path, parse_qs(url.query))
         if url.path == "/ai/explain":
             return self._ai_explain()
         if url.path == "/code/index":
@@ -242,9 +233,6 @@ class Handler(BaseHTTPRequestHandler):
         except claude_cli.AiError as exc:
             self._ai_error(exc.code, lang)
 
-    def _ws_error(self, code: str, lang: str, **params) -> None:
-        self._json(WS_STATUS.get(code, 400), {"error": code, "message": t(f"workspace.error.{code}", lang, **params)})
-
     def _read_body(self, limit: int = MAX_JSON_BODY):
         """Parsed JSON object from the body ({} when empty), or None if too large or invalid."""
         try:
@@ -257,87 +245,6 @@ class Handler(BaseHTTPRequestHandler):
             return data if isinstance(data, dict) else None
         except ValueError:
             return None
-
-    def _workspaces(self, method: str, path: str, query: dict) -> None:
-        """Projects: create, ideas, drafts, review (approve/reject), undo and sharing."""
-        lang = query.get("lang", ["en"])[0]
-        lang = lang if lang in SUPPORTED else "en"
-        route = WS_ROUTE.match(path)
-        if not route:
-            return self._json(404, {"error": "not found"})
-        ws_id, section, item, action = route.groups()
-        body: dict = {}
-        if method == "POST":
-            parsed = self._read_body()
-            if parsed is None:
-                return self._ws_error("bad_request", lang)
-            body = parsed
-            if body.get("lang") in SUPPORTED:
-                lang = body["lang"]
-        try:
-            return self._workspace_action(method, ws_id, section, item, action, query, body, lang)
-        except WorkspaceError as exc:
-            return self._ws_error(exc.code, lang, **exc.params)
-        except claude_cli.AiError as exc:
-            return self._ai_error(exc.code, lang)
-
-    def _workspace_action(self, method, ws_id, section, item, action, query, body, lang) -> None:
-        if ws_id is None:
-            if method == "GET":
-                return self._json(200, {"projects": Workspace.list_all()})
-            code_map = None
-            index = self._get_index(str(body.get("code_id", ""))) if body.get("code_id") else None
-            if index:
-                code_map = narrate.code_map(index, lang)
-            project, source = service.create_project(
-                body.get("report") if isinstance(body.get("report"), dict) else {}, code_map,
-                str(body.get("name", "")), lang, owner_confirmed=body.get("owner_confirmed"),
-                use_ai=body.get("use_ai") is True)
-            return self._json(200, {**project.summary(), "spec": source})
-
-        project = Workspace.open(ws_id)
-        if section is None:
-            return self._json(200, {**project.summary(), "files": project.file_list(), "ideas": project.ideas(),
-                                    "proposals": project.proposals(), "history": project.history()})
-        if section == "file" and method == "GET":
-            return self._json(200, {"path": query.get("path", [""])[0],
-                                    "content": project.read_file(query.get("path", [""])[0])})
-        if section == "export.zip" and method == "GET":
-            data = project.export_zip()
-            self.send_response(200)
-            self._cors()
-            self.send_header("Content-Type", "application/zip")
-            self.send_header("Content-Disposition", f'attachment; filename="{project.id}.zip"')
-            self.send_header("Content-Length", str(len(data)))
-            self.end_headers()
-            self.wfile.write(data)
-            return
-        if section == "undo" and method == "POST":
-            return self._json(200, project.undo())
-        if section == "ideas":
-            if item == "export" and method == "GET":
-                return self._json(200, project.export_ideas())
-            if item == "import" and method == "POST":
-                return self._json(200, project.import_ideas(body))
-            if item is None and method == "POST":
-                return self._json(200, project.add_idea(str(body.get("text", "")), str(body.get("author", ""))))
-            if item and action == "draft" and method == "POST":
-                return self._json(200, service.draft_idea(project, item, lang))
-        if section == "proposals" and item:
-            if action is None and method == "GET":
-                return self._json(200, self._translated(project.proposal_view(item), lang))
-            if action == "approve" and method == "POST":
-                return self._json(200, project.approve(item))
-            if action == "reject" and method == "POST":
-                return self._json(200, project.reject(item))
-        self._json(404, {"error": "not found"})
-
-    @staticmethod
-    def _translated(view: dict, lang: str) -> dict:
-        """Warnings come with ready-to-show text in the user's language."""
-        for w in view["warnings"]:
-            w["text"] = t(f"workspace.warning.{w['id']}", lang, items=", ".join(w["items"]))
-        return view
 
     def _ai_error(self, code: str, lang: str) -> None:
         self._json(AI_STATUS.get(code, 502), {"error": code, "message": t(f"ai.error.{code}", lang)})

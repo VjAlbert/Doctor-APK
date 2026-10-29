@@ -3,17 +3,12 @@ import { useEffect, useState } from 'react'
 import { EngineError } from '../lib/client'
 import { explainCode, getSlice, indexCode, previewCodeExplanation, type Capability, type CodeMap, type CodeView as CodeSlice } from '../lib/code'
 import { useLang } from '../lib/lang'
-import type { Report } from '../lib/types'
-import type { ProjectSummary } from '../lib/workspace'
-import { CreateProjectDialog } from './CreateProjectDialog'
 import { AiAnswerPanel } from './AiAnswerPanel'
 import { InfoIcon, SparkIcon } from './Icons'
 
 interface Props {
-  report: Report
   file: File | null
   aiReady: boolean
-  onCreated: (project: ProjectSummary) => void
 }
 
 const AMBER = '#fbbf24'
@@ -83,14 +78,12 @@ function CodeDrawer({ map, capability, aiReady, onClose }: { map: CodeMap; capab
   )
 }
 
-export function CodeView({ report, file, aiReady, onCreated }: Props) {
+export function CodeView({ file, aiReady }: Props) {
   const { t, lang } = useLang()
   const [map, setMap] = useState<CodeMap | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [open, setOpen] = useState<Capability | null>(null)
-  const [creating, setCreating] = useState(false)
   const [elapsed, setElapsed] = useState(0)
-  const harmful = report.verdict.id === 'do_not_install'
 
   useEffect(() => {
     if (!file || map) return
@@ -132,11 +125,6 @@ export function CodeView({ report, file, aiReady, onCreated }: Props) {
           <h1 className="text-2xl font-semibold tracking-tight">{t('code.title')}</h1>
           <p className="font-mono text-xs text-dim">{t('code.stats').replace('{c}', String(map.stats.classes)).replace('{m}', String(map.stats.methods))}
             {map.timings && ` · ${t('code.readIn')} ${((map.timings.decode_ms + map.timings.xref_ms + map.timings.rules_ms) / 1000).toFixed(1)} s (${(map.timings.decode_ms / 1000).toFixed(1)} + ${(map.timings.xref_ms / 1000).toFixed(1)} + ${(map.timings.rules_ms / 1000).toFixed(1)})`}</p>
-        </div>
-        <div className="text-right">
-          <button type="button" disabled={harmful} onClick={() => setCreating(true)} data-testid="create-project"
-            className="rounded-xl border border-line-strong px-4 py-2 text-sm text-ink transition hover:bg-white/[.05] disabled:cursor-not-allowed disabled:opacity-40">{t('proj.create')}</button>
-          {harmful && <p className="mt-1.5 max-w-xs text-xs text-dim">{t('proj.harmful')}</p>}
         </div>
       </div>
       <p className="mt-3 flex items-start gap-2 text-sm leading-relaxed text-muted"><InfoIcon size={16} className="mt-0.5 shrink-0" />{t('code.intro')}</p>
@@ -199,7 +187,6 @@ export function CodeView({ report, file, aiReady, onCreated }: Props) {
         </ul>
       </section>
 
-      {creating && <CreateProjectDialog report={report} codeId={map.id} aiReady={aiReady} onClose={() => setCreating(false)} onCreated={onCreated} />}
       <AnimatePresence>
         {open && <CodeDrawer map={map} capability={open} aiReady={aiReady} onClose={() => setOpen(null)} />}
       </AnimatePresence>
