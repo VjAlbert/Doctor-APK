@@ -169,3 +169,19 @@ def test_cli_report_includes_authenticity_label(benign_apk, capsys):
     assert cli.main(["analyze", str(benign_apk), "--lang", "it"]) == 0
     final = json.loads(capsys.readouterr().out.splitlines()[-1])["report"]
     assert final["authenticity"]["status"] == "unknown" and final["authenticity"]["label"] == "Non verificabile"
+
+
+def test_fdroid_index_conversion():
+    import importlib.util
+    from pathlib import Path
+    spec = importlib.util.spec_from_file_location(
+        "import_fdroid", Path(__file__).resolve().parents[2] / "tools/import_fdroid.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    good, other = "a" * 64, "B" * 64
+    out = mod.convert({"repo": {"timestamp": 1}, "packages": {
+        "org.a": [{"signer": good}, {"signer": good}, {"signer": other}, {"signer": "bad"}],
+        "org.b": [{"sig": "md5only"}]}})
+    assert out["packages"] == {"org.a": [{"sha256": good, "source": "fdroid"},
+                                         {"sha256": other.lower(), "source": "fdroid"}]}
+    assert out["sources"]["fdroid"]["coverage"] == "store"
