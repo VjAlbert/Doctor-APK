@@ -54,10 +54,12 @@ def analyze(facts: DexFacts, report: Report) -> None:
                 continue
             seen.add(match.rule)
             meta = match.meta
+            hits = sorted({inst.matched_data.decode("latin-1")[:40]
+                           for st in match.strings for inst in st.instances})[:5]
             report.add(Finding(
                 "yara.match",
                 SEVERITIES.get(str(meta.get("severity", "medium")).lower(), Severity.MEDIUM),
                 MODULE,
-                {"rule": match.rule, "key": meta.get("key", match.rule)},
+                {"rule": match.rule, "key": meta.get("key", match.rule), "strings": hits},
             ))
     report.stats["yara_rule_files"] = len(_rule_files())

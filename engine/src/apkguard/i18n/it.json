@@ -304,7 +304,7 @@
   "finding.yara.accessibility_overlay_banker.description": "Il codice combina controllo dello schermo, sovrapposizioni e accesso agli SMS o occultamento dell'icona.",
   "finding.yara.accessibility_overlay_banker.title": "Schema da trojan bancario",
   "finding.yara.crypto_miner.advice": "Consuma batteria e potenza del telefono a vantaggio di altri.",
-  "finding.yara.crypto_miner.description": "Il codice contiene riferimenti a software di mining di criptovalute.",
+  "finding.yara.crypto_miner.description": "Il codice contiene riferimenti a software di mining di criptovalute ({strings}).",
   "finding.yara.crypto_miner.title": "Contiene un cripto-miner",
   "finding.yara.generic.advice": "Valuta l'app con gli altri segnali.",
   "finding.yara.generic.description": "Il codice corrisponde alla regola «{rule}».",

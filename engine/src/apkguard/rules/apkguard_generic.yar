@@ -42,7 +42,8 @@ rule crypto_miner
         $d = "cryptonight" nocase
         $e = "coinhive" nocase
     condition:
-        any of them
+        // One bare name is not enough: security and ad SDKs ship blocklists that name miners.
+        any of ($a, $b) or 2 of ($c, $d, $e)
 }
 
 rule accessibility_overlay_banker

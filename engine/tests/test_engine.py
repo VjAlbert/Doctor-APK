@@ -221,3 +221,14 @@ def test_unknown_yara_rule_falls_back_to_generic():
     from apkguard.models import Finding
     f = Finding("yara.match", Severity.MEDIUM, "yara", {"rule": "custom_rule", "key": "custom_rule"})
     assert "custom_rule" in render_finding(f, "it")["title"]
+
+
+def test_single_miner_name_is_not_a_miner(work, good_keystore):
+    import apkbuilder as b
+    from apkbuilder import build_dex
+    for strings, expected in ((["coinhive"], False), (["coinhive", "xmrig"], True),
+                              (["stratum+tcp://pool.example:3333"], True)):
+        apk = b.build_apk(work / f"m{len(strings)}{expected}.apk", b.manifest_tree("com.example.m"), good_keystore,
+                          dex=build_dex(strings=strings))
+        rules = {m.params["rule"] for m in by_id(analyze_apk(apk), "yara.match")}
+        assert ("crypto_miner" in rules) is expected, strings

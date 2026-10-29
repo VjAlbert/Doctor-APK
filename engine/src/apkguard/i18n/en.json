@@ -304,7 +304,7 @@
   "finding.yara.accessibility_overlay_banker.description": "The code combines screen control, overlays and SMS access or icon hiding.",
   "finding.yara.accessibility_overlay_banker.title": "Banking-trojan pattern",
   "finding.yara.crypto_miner.advice": "It drains battery and processing power for someone else's benefit.",
-  "finding.yara.crypto_miner.description": "The code references cryptocurrency mining software.",
+  "finding.yara.crypto_miner.description": "The code references cryptocurrency mining software ({strings}).",
   "finding.yara.crypto_miner.title": "Contains a crypto miner",
   "finding.yara.generic.advice": "Weigh the app with the other signals.",
   "finding.yara.generic.description": "The code matches the rule \"{rule}\".",
